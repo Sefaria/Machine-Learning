@@ -11,8 +11,9 @@ from sefaria.helper.normalization import NormalizerByLang, NormalizerComposer
 
 class TextWalker:
 
-    def __init__(self, output, lang, max_line_len=None, format='txt', overlap=0):
-        self.output = output
+    def __init__(self, output_text, output_jsonl, lang, max_line_len=None, format='both', overlap=0):
+        self.output_text = output_text
+        self.output_jsonl = output_jsonl
         self.lang = lang
         self.max_line_len = max_line_len
         self.format = format
@@ -44,19 +45,21 @@ class TextWalker:
                 self.write_text(line)
 
     def write_text(self, text):
-        if self.format == 'jsonl':
-            text = json.dumps({"text": text})
-        self.output.write(text + '\n')
+        if self.format in {'both', 'jsonl'}:
+            self.output_jsonl.write(json.dumps({"text": text}) + '\n')
+        if self.format in {'both', 'txt'}:
+            self.output_text.write(text + '\n')
 
     def action(self, text, en_tref, he_tref, version):
         self.write_lines(text)
 
-def export_library_as_file(lang, output_stem, max_line_len=None, format='txt', overlap=0, webpages_text=None):
+def export_library_as_file(lang, output_stem, max_line_len=None, format='both', overlap=0, webpages_text=None):
     vs = VersionSet({"language": lang})
     count = vs.count()
-    output_fname = f"{output_stem}.{format}"
-    output = open(output_fname, "w")
-    walker = TextWalker(output, lang, max_line_len=max_line_len, format=format, overlap=overlap)
+    output_text = open(f"{output_stem}.txt", "w")
+    output_jsonl = open(f"{output_stem}.jsonl", "w")
+
+    walker = TextWalker(output_text, output_jsonl, lang, max_line_len=max_line_len, format=format, overlap=overlap)
     for v in tqdm(vs, total=count):
         if v.versionTitle[-5:-3] == ' [':
             continue
@@ -69,7 +72,8 @@ def export_library_as_file(lang, output_stem, max_line_len=None, format='txt', o
             for line in fin:
                 walker.write_lines(line)
 
-    output.close()
+    output_text.close()
+    output_jsonl.close()
 
 """
 # Currently unused
@@ -189,7 +193,5 @@ def get_args():
 
 if __name__ == '__main__':
     args = get_args()
-    formats = [args.format] if args.format != 'both' else ['txt', 'jsonl']
-    for f in formats:
-        export_library_as_file(args.lang, args.output, max_line_len=512, overlap=50, webpages_text=args.webpages_data, format=f)
+    export_library_as_file(args.lang, args.output, max_line_len=512, overlap=50, webpages_text=args.webpages_data, format=args.format)
 
