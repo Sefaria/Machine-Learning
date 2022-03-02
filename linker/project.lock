@@ -13,8 +13,14 @@ export-library:
   script:
     - python scripts/library_exporter.py he -f both -w corpus/all_text_webpages_he.txt
       -o corpus/all_text_he
-  deps: []
-  outs: []
+  deps:
+    - path: scripts/restore_db.sh
+      md5: 5cafcd94fb535ddb8a8c93def7173a16
+  outs:
+    - path: corpus/all_text_he.txt
+      md5: b7d8247426edd71f3997b13aa1e2c6ce
+    - path: corpus/all_text_he.jsonl
+      md5: 2d9100310360f581768caa5c5b0e76e2
   spacy_version: 3.2.0
   spacy_git_version: 0fc3dee77
 train-floret:

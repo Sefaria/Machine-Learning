@@ -23,6 +23,7 @@ workflows:
     #- download-sefaria-dump
     - export-library
     - train-floret
+    - init-floret-vectors
 
 # Project commands, specified in a style similar to CI config files (e.g. Azure
 # pipelines). The name is the command name that lets you trigger the command
@@ -60,17 +61,9 @@ commands:
   - name: "init-floret-vectors"
     help: "Create a floret vectors model"
     script:
-      - "python -m spacy init vectors ${vars.lang} vectors/${vars.oscar_dataset}.${vars.max_texts}.dim300.minCount10.n3-6.neg10.modeFloret.hashCount2.bucket20000.floret vectors/${vars.oscar_dataset}.${vars.max_texts}_floret_model --mode floret"
+      - "python -m spacy init vectors ${vars.lang} vectors/all_text_${vars.lang}.floret vectors/all_text_${vars.lang}_floret_model --mode floret"
     deps:
-      - "vectors/${vars.oscar_dataset}.${vars.max_texts}.dim300.minCount10.n3-6.neg10.modeFloret.hashCount2.bucket20000.floret"
+      - "vectors/all_text_${vars.lang}.floret"
     outputs:
-      - "vectors/${vars.oscar_dataset}.${vars.max_texts}_floret_model"
-
-  - name: "floret-nn"
-    help: "Demo nearest neighbors for intentional OOV misspelling 'outdooor'"
-    script:
-      - "python scripts/nn_floret.py vectors/${vars.oscar_dataset}.${vars.max_texts}.dim300.minCount10.n3-6.neg10.modeFloret.hashCount2.bucket20000.bin outdooor"
-    deps:
-      - "scripts/nn_floret.py"
-      - "vectors/${vars.oscar_dataset}.${vars.max_texts}.dim300.minCount10.n3-6.neg10.modeFloret.hashCount2.bucket20000.bin"
+      - "vectors/all_text_${vars.lang}_floret_model"
 
