@@ -3,7 +3,7 @@ description: "All preprocessing and training to train linker models"
 spacy_version: ">=3.2.0,<4.0.0"
 # Variables can be referenced across the project.yml using ${vars.var_name}
 vars:
-  name: "floret_vectors"
+  name: "webpages"
   lang: "he"
   oscar_dataset: "unshuffled_deduplicated_en"
   max_texts: 1000
@@ -75,4 +75,11 @@ commands:
     outputs:
       - "models/pretrain_ref"
 
+  - name: "train-ref-model"
+    script:
+      - "python -m spacy train configs/ref-v3.2.cfg --output models/${vars.name}_${vars.lang} --code ../util/spacy_registry.py --gpu-id 0"
+    deps:
+      - "configs/ref-v3.2.cfg"
+    outputs:
+      - "models/${vars.name}_${vars.lang}"
 
