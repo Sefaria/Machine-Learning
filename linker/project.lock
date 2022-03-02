@@ -1,0 +1,41 @@
+download-sefaria-dump:
+  cmd: python -m spacy run download-sefaria-dump
+  script:
+    - sh scripts/restore_db.sh
+  deps:
+    - path: scripts/restore_db.sh
+      md5: 5cafcd94fb535ddb8a8c93def7173a16
+  outs: []
+  spacy_version: 3.2.0
+  spacy_git_version: 0fc3dee77
+export-library:
+  cmd: python -m spacy run export-library
+  script:
+    - python scripts/library_exporter.py he -f both -w corpus/all_text_webpages_he.txt
+      -o corpus/all_text_he
+  deps: []
+  outs: []
+  spacy_version: 3.2.0
+  spacy_git_version: 0fc3dee77
+train-floret:
+  cmd: python -m spacy run train-floret
+  script:
+    - python scripts/train_floret.py --model cbow --dim 300 --mincount 0 --minn 3
+      --maxn 6 --neg 10 --mode floret --hashcount 2 --bucket 20000 --thread 8 corpus/test.txt
+      vectors/all_text_he
+  deps:
+    - path: scripts/train_floret.py
+      md5: 3263039de07c5c78aed079ecba49cb68
+    - path: corpus/test.txt
+      md5: f2e38d004597a93a4942116204e20bdb
+    - path: corpus/all_text_he.txt
+      md5: ab71322b150426fbd2dfcfb07e2e1786
+  outs:
+    - path: vectors/all_text_he.floret
+      md5: 39515f13679b1713e547c59df20e71c6
+    - path: vectors/all_text_he.vec
+      md5: 326320474e52ce488c8eadd68510df93
+    - path: vectors/all_text_he.bin
+      md5: 09fe34e621b3b50687c66b72cd75e3a3
+  spacy_version: 3.2.0
+  spacy_git_version: 0fc3dee77
