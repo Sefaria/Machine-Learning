@@ -13,7 +13,7 @@ vars:
 
 # These are the directories that the project needs. The project CLI will make
 # sure that they always exist.
-directories: ["corpus", "vectors", "scripts"]
+directories: ["corpus", "vectors", "scripts", "configs", "models"]
 
 ## Workflows are sequences of commands (see below) executed in order. You can
 ## run them via "spacy project run [workflow]". If a commands's inputs/outputs
@@ -49,7 +49,7 @@ commands:
   - name: "train-floret"
     help: "Train floret vectors"
     script:
-      - "python scripts/train_floret.py --model cbow --dim 300 --mincount 10 --minn 3 --maxn 6 --neg 10 --mode floret --hashcount 2 --bucket 20000 --thread ${vars.n_process} corpus/all_text_${vars.lang}.txt vectors/all_text_${vars.lang}"
+      - "python scripts/train_floret.py --model cbow --dim 300 --mincount 10 --minn 3 --maxn 6 --neg 10 --mode floret --hashcount 2 --bucket 20000 --thread ${vars.n_process} --epoch 10 corpus/all_text_${vars.lang}.txt vectors/all_text_${vars.lang}"
     deps:
       - "scripts/train_floret.py"
       - "corpus/all_text_${vars.lang}.txt"
@@ -66,4 +66,13 @@ commands:
       - "vectors/all_text_${vars.lang}.floret"
     outputs:
       - "vectors/all_text_${vars.lang}_floret_model"
+
+  - name: "pretrain"
+    script:
+      - "python -m spacy pretrain configs/ref-v3.2.cfg models/pretrain_ref --code ../util/spacy_registry.py --gpu-id 0"
+    deps:
+      - "configs/ref-v3.2.cfg"
+    outputs:
+      - "models/pretrain_ref"
+
 
