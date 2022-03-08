@@ -26,22 +26,127 @@ export-library:
 train-floret:
   cmd: python -m spacy run train-floret
   script:
-    - python scripts/train_floret.py --model cbow --dim 300 --mincount 0 --minn 3
-      --maxn 6 --neg 10 --mode floret --hashcount 2 --bucket 20000 --thread 8 corpus/test.txt
-      vectors/all_text_he
+    - python scripts/train_floret.py --model cbow --dim 300 --mincount 10 --minn 3
+      --maxn 6 --neg 10 --mode floret --hashcount 2 --bucket 20000 --thread 8 --epoch
+      10 corpus/all_text_he.txt vectors/all_text_he
   deps:
     - path: scripts/train_floret.py
-      md5: 3263039de07c5c78aed079ecba49cb68
-    - path: corpus/test.txt
-      md5: f2e38d004597a93a4942116204e20bdb
+      md5: 24ec6c00e168a5981011fe4197d5363a
     - path: corpus/all_text_he.txt
-      md5: ab71322b150426fbd2dfcfb07e2e1786
+      md5: b7d8247426edd71f3997b13aa1e2c6ce
   outs:
     - path: vectors/all_text_he.floret
-      md5: 39515f13679b1713e547c59df20e71c6
+      md5: cd6203ee6ce18b3128f34914c8326bdc
     - path: vectors/all_text_he.vec
-      md5: 326320474e52ce488c8eadd68510df93
+      md5: d76bf8f8f46214262ee0723ea83b14b3
     - path: vectors/all_text_he.bin
-      md5: 09fe34e621b3b50687c66b72cd75e3a3
+      md5: 1cc8b117091f5c789c4e18499b190005
   spacy_version: 3.2.0
   spacy_git_version: 0fc3dee77
+init-floret-vectors:
+  cmd: python -m spacy run init-floret-vectors
+  script:
+    - python -m spacy init vectors he vectors/all_text_he.floret vectors/all_text_he_floret_model
+      --mode floret
+  deps:
+    - path: vectors/all_text_he.floret
+      md5: cd6203ee6ce18b3128f34914c8326bdc
+  outs:
+    - path: vectors/all_text_he_floret_model
+      md5: 5df72df9cb56bde99737791079b07b0a
+  spacy_version: 3.2.0
+  spacy_git_version: 0fc3dee77
+train-fasttext:
+  cmd: python -m spacy run train-fasttext
+  script:
+    - python scripts/embedding_scripts.py fasttext -d 300 -i corpus/all_text_he.txt
+      -o vectors/all_text_he.fasttext
+  deps:
+    - path: scripts/embedding_scripts.py
+      md5: a2c8881d568316fc451062dbe8ea47e1
+    - path: corpus/all_text_he.txt
+      md5: b7d8247426edd71f3997b13aa1e2c6ce
+  outs:
+    - path: vectors/all_text_he.fasttext.bin
+      md5: a5bfdc1be414dd419b0bdbba69cea653
+    - path: vectors/all_text_he.fasttext.vec
+      md5: 252c1b674c8298de6bc843dcc08b93fa
+  spacy_version: 3.2.3
+  spacy_git_version: 99425de36
+init-fasttext-vectors:
+  cmd: python -m spacy run init-fasttext-vectors
+  script:
+    - python -m spacy init vectors he vectors/all_text_he.fasttext.vec vectors/all_text_he_fasttext_model
+  deps:
+    - path: vectors/all_text_he.fasttext.vec
+      md5: 252c1b674c8298de6bc843dcc08b93fa
+  outs:
+    - path: vectors/all_text_he_fasttext_model
+      md5: 8c24ebaeeaf403a2b8dcef423a283f13
+  spacy_version: 3.2.3
+  spacy_git_version: 99425de36
+pretrain:
+  cmd: python -m spacy run pretrain
+  script:
+    - python -m spacy pretrain configs/ref-v3.2.cfg models/pretrain_ref_he --paths.vectors
+      vectors/all_text_he_fasttext_model --paths.raw_text corpus/all_text_he.jsonl
+      --paths.input_collection webpages_output --nlp.lang he --code ../util/spacy_registry.py
+      --gpu-id 0
+  deps:
+    - path: configs/ref-v3.2.cfg
+      md5: 8dd5e22ca7aaa3df86f8d067be8d02d2
+    - path: vectors/all_text_he_fasttext_model
+      md5: 8c24ebaeeaf403a2b8dcef423a283f13
+  outs:
+    - path: models/pretrain_ref_he
+      md5: f141fc80ccfe57855dabf3eadcd6eb99
+  spacy_version: 3.2.3
+  spacy_git_version: 99425de36
+train-ref-model:
+  cmd: python -m spacy run train-ref-model
+  script:
+    - python -m spacy train configs/ref-v3.2.cfg --output models/webpages_he --paths.vectors
+      vectors/all_text_he_fasttext_model --paths.input_collection webpages_output
+      --nlp.lang he --paths.init_tok2vec models/pretrain_ref_he/model8.bin --code
+      ../util/spacy_registry.py --gpu-id 0
+  deps:
+    - path: configs/ref-v3.2.cfg
+      md5: d133a692ef2aa427b85db03ffd6ec8ed
+    - path: models/pretrain_ref_he
+      md5: f141fc80ccfe57855dabf3eadcd6eb99
+  outs:
+    - path: models/webpages_he
+      md5: f7b011989f76aa5ceab971edb93c7e56
+  spacy_version: 3.2.3
+  spacy_git_version: 99425de36
+upload-models:
+  cmd: python -m spacy run upload-models
+  script:
+    - tar cfv models/webpages_subref_he.tar models/webpages_subref_he/model-best
+    - krsync.sh -av --progress --stats models/webpages_subref_he.tar annotator-bodum-0:/prodigy-disk/webpages_subref_he.tar
+    - kubectl exec -it annotator-bodum-0 -- tar xf /prodigy-disk/webpages_subref_he.tar
+    - kubectl exec -it annotator-bodum-0 -- mv models/webpages_subref_he/model-best
+      /prodigy-disk/webpages_subref_he
+    - kubectl exec -it annotator-bodum-0 -- rm -rf models /prodigy-disk/webpages_subref_he.tar
+    - rm -rf models/webpages_subref_he.tar
+  deps: []
+  outs: []
+  spacy_version: 3.2.3
+  spacy_git_version: 99425de36
+train-subref-model:
+  cmd: python -m spacy run train-subref-model
+  script:
+    - python -m spacy train configs/subref-v3.2.cfg --output models/webpages_subref_he
+      --paths.vectors vectors/all_text_he_fasttext_model --paths.input_collection
+      webpages_sub_citation_output --nlp.lang he --paths.init_tok2vec models/pretrain_ref_he/model8.bin
+      --code ../util/spacy_registry.py --gpu-id 0
+  deps:
+    - path: configs/subref-v3.2.cfg
+      md5: 8bb9a28efa82a4c66f3d6e806a949848
+    - path: models/pretrain_ref_he
+      md5: f141fc80ccfe57855dabf3eadcd6eb99
+  outs:
+    - path: models/webpages_subref_he
+      md5: d2f03ca97640a9fdaa6194ef398a61aa
+  spacy_version: 3.2.3
+  spacy_git_version: 99425de36

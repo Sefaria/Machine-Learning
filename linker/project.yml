@@ -1,13 +1,12 @@
 title: "Linker Pipeline"
-description: "All preprocessing and training to train linker models"
+description: "All preprocessing and training for linker models"
 spacy_version: ">=3.2.0,<4.0.0"
 # Variables can be referenced across the project.yml using ${vars.var_name}
 vars:
   name: "webpages"
   lang: "he"
-  oscar_dataset: "unshuffled_deduplicated_en"
-  max_texts: 1000
-  # number of processes (tokenization) and threads (floret)
+  annotator_pod: "annotator-bodum-0"
+  # number of processes (tokenization) and threads (fasttext)
   n_process: 8
 
 
@@ -21,9 +20,13 @@ directories: ["corpus", "vectors", "scripts", "configs", "models"]
 workflows:
   all:
     #- download-sefaria-dump
-    - export-library
-    - train-floret
-    - init-floret-vectors
+    #- export-library
+    #- train-floret
+    #- init-floret-vectors
+    - train-fasttext
+    - init-fasttext-vectors
+    - pretrain
+    #- train-ref-model
 
 # Project commands, specified in a style similar to CI config files (e.g. Azure
 # pipelines). The name is the command name that lets you trigger the command
@@ -67,19 +70,66 @@ commands:
     outputs:
       - "vectors/all_text_${vars.lang}_floret_model"
 
+  - name: train-fasttext
+    script:
+      - "python scripts/embedding_scripts.py fasttext -d 300 -i corpus/all_text_${vars.lang}.txt -o vectors/all_text_${vars.lang}.fasttext"
+    deps:
+      - scripts/embedding_scripts.py
+      - "corpus/all_text_${vars.lang}.txt"
+    outputs:
+      - vectors/all_text_${vars.lang}.fasttext.bin
+      - vectors/all_text_${vars.lang}.fasttext.vec
+
+  - name: "init-fasttext-vectors"
+    script:
+      - "python -m spacy init vectors ${vars.lang} vectors/all_text_${vars.lang}.fasttext.vec vectors/all_text_${vars.lang}_fasttext_model"
+    deps:
+      - vectors/all_text_${vars.lang}.fasttext.vec
+    outputs:
+      - "vectors/all_text_${vars.lang}_fasttext_model"
+
   - name: "pretrain"
     script:
-      - "python -m spacy pretrain configs/ref-v3.2.cfg models/pretrain_ref --code ../util/spacy_registry.py --gpu-id 0"
+      - "python -m spacy pretrain configs/ref-v3.2.cfg models/pretrain_ref_${vars.lang} --paths.vectors vectors/all_text_${vars.lang}_fasttext_model --paths.raw_text corpus/all_text_${vars.lang}.jsonl --paths.input_collection ${vars.name}_output --nlp.lang ${vars.lang} --code ../util/spacy_registry.py --gpu-id 0"
     deps:
       - "configs/ref-v3.2.cfg"
+      - vectors/all_text_${vars.lang}_fasttext_model
     outputs:
-      - "models/pretrain_ref"
+      - "models/pretrain_ref_${vars.lang}"
 
   - name: "train-ref-model"
     script:
-      - "python -m spacy train configs/ref-v3.2.cfg --output models/${vars.name}_${vars.lang} --code ../util/spacy_registry.py --gpu-id 0"
+      - "python -m spacy train configs/ref-v3.2.cfg --output models/${vars.name}_${vars.lang} --paths.vectors vectors/all_text_${vars.lang}_fasttext_model --paths.input_collection ${vars.name}_output --nlp.lang ${vars.lang} --paths.init_tok2vec models/pretrain_ref_${vars.lang}/model8.bin --code ../util/spacy_registry.py --gpu-id 0"
     deps:
       - "configs/ref-v3.2.cfg"
+      - "models/pretrain_ref_${vars.lang}"
     outputs:
       - "models/${vars.name}_${vars.lang}"
 
+  - name: "train-subref-model"
+    script:
+      - "python -m spacy train configs/subref-v3.2.cfg --output models/${vars.name}_subref_${vars.lang} --paths.vectors vectors/all_text_${vars.lang}_fasttext_model --paths.input_collection ${vars.name}_sub_citation_output --nlp.lang ${vars.lang} --paths.init_tok2vec models/pretrain_ref_${vars.lang}/model8.bin --code ../util/spacy_registry.py --gpu-id 0"
+    deps:
+      - "configs/subref-v3.2.cfg"
+      - "models/pretrain_ref_${vars.lang}"
+    outputs:
+      - "models/${vars.name}_subref_${vars.lang}"
+
+  - name: "upload-models"
+    help: "package and upload ref and subref models to annotator cauldron"
+    script:
+      # ref model
+      #- "tar cf models/${vars.name}_${vars.lang}.tar models/${vars.name}_${vars.lang}/model-best"
+      #- "kubectl exec -it ${vars.annotator_pod} -- apt-get install -y rsync"  # make sure rsync exists on pod
+      #- "krsync.sh -av --progress --stats models/${vars.name}_${vars.lang}.tar ${vars.annotator_pod}:/prodigy-disk/${vars.name}_${vars.lang}.tar"
+      #- "kubectl exec -it ${vars.annotator_pod} -- tar xf /prodigy-disk/${vars.name}_${vars.lang}.tar"
+      #- "kubectl exec -it ${vars.annotator_pod} -- mv models/${vars.name}_${vars.lang}/model-best /prodigy-disk/${vars.name}_${vars.lang}"
+      #- "kubectl exec -it ${vars.annotator_pod} -- rm -rf models /prodigy-disk/${vars.name}_${vars.lang}.tar"
+      #- "rm -rf models/${vars.name}_${vars.lang}.tar"
+      # subref model
+      - "tar cf models/${vars.name}_subref_${vars.lang}.tar models/${vars.name}_subref_${vars.lang}/model-best"
+      - "krsync.sh -av --progress --stats models/${vars.name}_subref_${vars.lang}.tar ${vars.annotator_pod}:/prodigy-disk/${vars.name}_subref_${vars.lang}.tar"
+      - "kubectl exec -it ${vars.annotator_pod} -- tar xf /prodigy-disk/${vars.name}_subref_${vars.lang}.tar"
+      - "kubectl exec -it ${vars.annotator_pod} -- mv models/${vars.name}_subref_${vars.lang}/model-best /prodigy-disk/${vars.name}_subref_${vars.lang}"
+      - "kubectl exec -it ${vars.annotator_pod} -- rm -rf models /prodigy-disk/${vars.name}_subref_${vars.lang}.tar"
+      - "rm -rf models/${vars.name}_subref_${vars.lang}.tar"

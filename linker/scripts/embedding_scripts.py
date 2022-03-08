@@ -5,17 +5,11 @@ import fasttext
 from gensim.models import Word2Vec
 from gensim.models.word2vec import LineSentence
 
-DATA_LOC = "/home/nss/sefaria/datasets/text classification"
 
-
-def train_fasttext(lang, dim=100, external_file=None):
+def train_fasttext(dim, train_file, output):
     print("FASTTEXT", dim)
-    if external_file is not None:
-        train_file = external_file
-    else:
-        train_file = "/home/nss/sefaria/datasets/general/all_text_he.txt" if lang == "he" else "/home/nss/sefaria/datasets/general/all_text_en.txt"
-    model = fasttext.train_unsupervised(train_file, dim=dim, epoch=10)
-    model.save_model(f"{DATA_LOC}/fasttext_{lang}_no_prefixes_{dim}.bin")
+    model = fasttext.train_unsupervised(train_file, dim=dim, epoch=10, minCount=10)
+    model.save_model(output)
 
 def convert_fasttext_bin_to_vec(in_path, out_path):
     # original BIN model loading
@@ -80,15 +74,19 @@ def train_custom_link_embedding_thingy():
 def init_argparse() -> argparse.ArgumentParser:
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('action', help='what action do you want to do?')
+    parser.add_argument('algo', help='what algo do you want to do?')
+    parser.add_argument('-i', '--input', dest='input')
+    parser.add_argument('-d', '--dim', dest='dim', type=int)
+    parser.add_argument('-o', '--output', dest='output_stem')
     return parser
 
 if __name__ == "__main__":
     parser = init_argparse()
     args = parser.parse_args()
 
-    if args.action == 'hello':
-        print('hello')
+    if args.algo == 'fasttext':
+        train_fasttext(args.dim, args.input, args.output_stem + '.bin')
+        convert_fasttext_bin_to_vec(args.output_stem + '.bin', args.output_stem + '.vec')
     else:
         print(':(')
 
