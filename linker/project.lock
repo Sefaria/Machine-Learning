@@ -122,7 +122,8 @@ train-ref-model:
 upload-models:
   cmd: python -m spacy run upload-models
   script:
-    - tar cfv models/webpages_subref_he.tar models/webpages_subref_he/model-best
+    - kubectl exec -it annotator-bodum-0 -- apt-get install -y rsync
+    - tar cf models/webpages_subref_he.tar models/webpages_subref_he/model-best
     - krsync.sh -av --progress --stats models/webpages_subref_he.tar annotator-bodum-0:/prodigy-disk/webpages_subref_he.tar
     - kubectl exec -it annotator-bodum-0 -- tar xf /prodigy-disk/webpages_subref_he.tar
     - kubectl exec -it annotator-bodum-0 -- mv models/webpages_subref_he/model-best
@@ -147,6 +148,6 @@ train-subref-model:
       md5: f141fc80ccfe57855dabf3eadcd6eb99
   outs:
     - path: models/webpages_subref_he
-      md5: d2f03ca97640a9fdaa6194ef398a61aa
+      md5: 40d1954893883d05999146aa6435edce
   spacy_version: 3.2.3
   spacy_git_version: 99425de36
