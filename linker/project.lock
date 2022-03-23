@@ -111,12 +111,12 @@ train-ref-model:
       ../util/spacy_registry.py --gpu-id 0
   deps:
     - path: configs/ref-v3.2.cfg
-      md5: d133a692ef2aa427b85db03ffd6ec8ed
+      md5: 947ef3bc5ae6061aabbd4bfccb24fcd1
     - path: models/pretrain_ref_he
       md5: f141fc80ccfe57855dabf3eadcd6eb99
   outs:
     - path: models/webpages_he
-      md5: f7b011989f76aa5ceab971edb93c7e56
+      md5: 3c95b0f41f04f9b4ea21cea654cfa171
   spacy_version: 3.2.3
   spacy_git_version: 99425de36
 upload-models:
