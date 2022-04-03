@@ -5,7 +5,7 @@ from tqdm import tqdm
 django.setup()
 from sefaria.model import *
 from sefaria.system.exceptions import InputError
-from research.prodigy.prodigy_package.db_manager import MongoProdigyDBManager
+from db_manager import MongoProdigyDBManager
 from sefaria.helper.normalization import NormalizerComposer
 
 
@@ -190,10 +190,10 @@ def make_prodigy_input_by_refs(ref_list, lang, vtitle):
         input_list += temp_input_list
     srsly.write_jsonl('data/test_input.jsonl', input_list)
 
-def make_prodigy_input_sub_citation(citation_collection, output_collection):
+def make_prodigy_input_sub_citation(citation_collection, output_collection, skip=0):
     my_db = MongoProdigyDBManager('blah', 'localhost', 27017)
     getattr(my_db.db, output_collection).delete_many({})
-    for doc in getattr(my_db.db, citation_collection).find({}):
+    for doc in getattr(my_db.db, citation_collection).find({}).skip(skip):
         for span in doc['spans']:
             span_text = doc['text'][span['start']:span['end']]
             getattr(my_db.db, output_collection).insert_one({"text": span_text, "spans": [], "meta": {"Ref": doc['meta']['Ref'], "Start": span['start'], "End": span['end']}})
