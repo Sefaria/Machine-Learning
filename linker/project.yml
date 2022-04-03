@@ -120,16 +120,18 @@ commands:
     script:
       # ref model
       #- "tar cf models/${vars.name}_${vars.lang}.tar models/${vars.name}_${vars.lang}/model-best"
-      - "kubectl exec -it ${vars.annotator_pod} -- apt-get install -y rsync"  # make sure rsync exists on pod
+      #- "kubectl exec -it ${vars.annotator_pod} -- apt-get install -y rsync"  # make sure rsync exists on pod
       #- "krsync.sh -av --progress --stats models/${vars.name}_${vars.lang}.tar ${vars.annotator_pod}:/prodigy-disk/${vars.name}_${vars.lang}.tar"
       #- "kubectl exec -it ${vars.annotator_pod} -- tar xf /prodigy-disk/${vars.name}_${vars.lang}.tar"
-      #- "kubectl exec -it ${vars.annotator_pod} -- mv models/${vars.name}_${vars.lang}/model-best /prodigy-disk/${vars.name}_${vars.lang}"
-      #- "kubectl exec -it ${vars.annotator_pod} -- rm -rf models /prodigy-disk/${vars.name}_${vars.lang}.tar"
-      #- "rm -rf models/${vars.name}_${vars.lang}.tar"
+      - "kubectl exec -it ${vars.annotator_pod} -- rm -rf /prodigy-disk/${vars.name}_${vars.lang}"
+      - "kubectl exec -it ${vars.annotator_pod} -- mv models/${vars.name}_${vars.lang}/model-best /prodigy-disk/${vars.name}_${vars.lang}"
+      - "kubectl exec -it ${vars.annotator_pod} -- rm -rf models /prodigy-disk/${vars.name}_${vars.lang}.tar"
+      - "rm -rf models/${vars.name}_${vars.lang}.tar"
       # subref model
       - "tar cf models/${vars.name}_subref_${vars.lang}.tar models/${vars.name}_subref_${vars.lang}/model-best"
       - "krsync.sh -av --progress --stats models/${vars.name}_subref_${vars.lang}.tar ${vars.annotator_pod}:/prodigy-disk/${vars.name}_subref_${vars.lang}.tar"
       - "kubectl exec -it ${vars.annotator_pod} -- tar xf /prodigy-disk/${vars.name}_subref_${vars.lang}.tar"
+      - "kubectl exec -it ${vars.annotator_pod} -- rm -rf /prodigy-disk/${vars.name}_subref_${vars.lang}"
       - "kubectl exec -it ${vars.annotator_pod} -- mv models/${vars.name}_subref_${vars.lang}/model-best /prodigy-disk/${vars.name}_subref_${vars.lang}"
       - "kubectl exec -it ${vars.annotator_pod} -- rm -rf models /prodigy-disk/${vars.name}_subref_${vars.lang}.tar"
       - "rm -rf models/${vars.name}_subref_${vars.lang}.tar"

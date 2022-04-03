@@ -1,0 +1,4 @@
+srsly
+spacy
+pymongo
+scikit-learn

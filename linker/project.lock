@@ -122,10 +122,14 @@ train-ref-model:
 upload-models:
   cmd: python -m spacy run upload-models
   script:
-    - kubectl exec -it annotator-bodum-0 -- apt-get install -y rsync
+    - kubectl exec -it annotator-bodum-0 -- rm -rf /prodigy-disk/webpages_he
+    - kubectl exec -it annotator-bodum-0 -- mv models/webpages_he/model-best /prodigy-disk/webpages_he
+    - kubectl exec -it annotator-bodum-0 -- rm -rf models /prodigy-disk/webpages_he.tar
+    - rm -rf models/webpages_he.tar
     - tar cf models/webpages_subref_he.tar models/webpages_subref_he/model-best
     - krsync.sh -av --progress --stats models/webpages_subref_he.tar annotator-bodum-0:/prodigy-disk/webpages_subref_he.tar
     - kubectl exec -it annotator-bodum-0 -- tar xf /prodigy-disk/webpages_subref_he.tar
+    - kubectl exec -it annotator-bodum-0 -- rm -rf /prodigy-disk/webpages_subref_he
     - kubectl exec -it annotator-bodum-0 -- mv models/webpages_subref_he/model-best
       /prodigy-disk/webpages_subref_he
     - kubectl exec -it annotator-bodum-0 -- rm -rf models /prodigy-disk/webpages_subref_he.tar
@@ -143,11 +147,11 @@ train-subref-model:
       --code ../util/spacy_registry.py --gpu-id 0
   deps:
     - path: configs/subref-v3.2.cfg
-      md5: 8bb9a28efa82a4c66f3d6e806a949848
+      md5: 966839d2f76f5f591c3904c6ce4402b5
     - path: models/pretrain_ref_he
       md5: f141fc80ccfe57855dabf3eadcd6eb99
   outs:
     - path: models/webpages_subref_he
-      md5: 40d1954893883d05999146aa6435edce
+      md5: 450d342959162136eff5b91bd047f484
   spacy_version: 3.2.3
   spacy_git_version: 99425de36
