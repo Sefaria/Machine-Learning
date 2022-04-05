@@ -24,12 +24,6 @@ def inner_punct_tokenizer_factory():
                          token_match=None)
     return inner_punct_tokenizer
 
-def import_file_to_collection(input_file, collection, db_host='localhost', db_port=27017):
-    my_db = MongoProdigyDBManager('blah', db_host, db_port)
-    stream = srsly.read_jsonl(input_file)
-    getattr(my_db.db, collection).delete_many({})
-    getattr(my_db.db, collection).insert_many(stream)
-
 def load_model(model_dir, labels, lang):
     model_exists = True
     try:
@@ -183,7 +177,7 @@ if __name__ == "__main__":
     model_dir = "/home/nss/sefaria/data/research/prodigy/output/webpages/model-last"
     validate_tokenizer(model_dir, "ה, א-ב", 'he')
     validate_alignment(model_dir, 'he', "פסוקים א-ו", [(0, 8, 'מספר'), (8, 9, 'סימן-טווח'), (9, 10, 'מספר')])
-    # import_file_to_collection('../data/test_input.jsonl', 'webpages_input')
+
 """
 command to run
 

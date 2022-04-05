@@ -10,9 +10,10 @@ from sefaria.helper.normalization import NormalizerComposer
 
 
 class ProdigyInputWalker:
-    def __init__(self, prev_tagged_refs=None):
+    def __init__(self, prev_tagged_refs=None, with_links=False):
         self.prodigyInput = []
         self.prodigyInputByVersion = defaultdict(list)
+        self.with_links = with_links
         self.prev_tagged_refs = prev_tagged_refs or []
         self.normalizer = NormalizerComposer(['unidecode', 'html', 'maqaf', 'cantillation', 'double-space'])
 
@@ -59,7 +60,7 @@ class ProdigyInputWalker:
         temp_input_list = []
         for t in text_list:
             if len(t) <= 20: continue
-            refs_with_loc = ProdigyInputWalker.get_refs_with_location(t, language)
+            refs_with_loc = ProdigyInputWalker.get_refs_with_location(t, language) if self.with_links else []
             temp_input = {
                 "text": t,
                 "spans": [
@@ -77,7 +78,7 @@ class ProdigyInputWalker:
             print("ignoring", en_tref)
             return
         # text = TextChunk._strip_itags(text)
-        temp_input_list = self.get_input(norm_text, en_tref, version.language)
+        temp_input_list = self.get_input(text, en_tref, version.language)
         self.prodigyInputByVersion[(version.versionTitle, version.title, version.language)] += temp_input_list
         
     def make_final_input(self, sample_size):
@@ -91,8 +92,8 @@ class ProdigyInputWalker:
         random.shuffle(self.prodigyInput)
 
 
-def make_prodigy_input(title_list, vtitle_list, lang_list, prev_tagged_refs):
-    walker = ProdigyInputWalker(prev_tagged_refs)
+def make_prodigy_input(title_list, vtitle_list, lang_list, prev_tagged_refs, collection, with_links=False):
+    walker = ProdigyInputWalker(prev_tagged_refs, with_links)
     for title, vtitle, lang in tqdm(zip(title_list, vtitle_list, lang_list), total=len(title_list)):
         if vtitle is None:
             version = VersionSet({"title": title, "language": lang}, sort=[("priority", -1)], limit=1).array()[0]
@@ -100,7 +101,13 @@ def make_prodigy_input(title_list, vtitle_list, lang_list, prev_tagged_refs):
             version = Version().load({"title": title, "versionTitle": vtitle, "language": lang})
         version.walk_thru_contents(walker.action)
     walker.make_final_input(400)
-    srsly.write_jsonl('data/test_input.jsonl', walker.prodigyInput)
+    import_data_to_collection(walker.prodigyInput, collection)
+
+
+def import_data_to_collection(data, collection, db_host='localhost', db_port=27017):
+    my_db = MongoProdigyDBManager('blah', db_host, db_port)
+    getattr(my_db.db, collection).delete_many({})
+    getattr(my_db.db, collection).insert_many(data)
 
 
 def num_english_chars(s, perc=True):
@@ -214,12 +221,13 @@ if __name__ == "__main__":
     #     "Tosafot Yeshanim on Keritot", "HaMaor HaKatan on Eruvin", "Nimukei Yosef on Bava Metzia"
     # ]
     title_list = [
-        "Ein HaTekhelet", "Shev Shmat'ta", "Havot Yair", "Responsa Chatam Sofer", "Netivot Olam", "Mei HaShiloach", "Pri Tzadik", "Sefer HeArukh"
+        "Ein HaTekhelet", "Shev Shmat'ta", "Havot Yair", "Responsa Chatam Sofer", "Netivot Olam", "Mei HaShiloach",
+        "Pri Tzadik", "Sefer HeArukh", "Gilyon HaShas on Berakhot", "Chakham Tzvi", "Sheilat Yaavetz", "B'Mareh HaBazak Volume VII"
     ]
     prev_tagged_refs = get_prev_tagged_refs('webpages_output')
     # title_list = [i.title for i in IndexSet({"title": re.compile(r'Gilyon HaShas on')})]
     # print(title_list)
-    #make_prodigy_input(title_list, [None]*len(title_list), ['en']*len(title_list), prev_tagged_refs)
+    make_prodigy_input(title_list, [None]*len(title_list), ['he']*len(title_list), prev_tagged_refs, 'achronim_input')
     #make_prodigy_input_webpages(3000, prev_tagged_refs)
     # combine_all_sentences_to_paragraphs()
-    make_prodigy_input_sub_citation('webpages_output', 'webpages_sub_citation_input2')
+    # make_prodigy_input_sub_citation('webpages_output', 'webpages_sub_citation_input2')
