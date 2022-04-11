@@ -4,7 +4,9 @@ Functions for analyzing models
 
 from typing import Callable, Iterator, List
 from spacy.util import ensure_path
-import spacy, re, srsly, json, csv
+import spacy, re, srsly, json, csv, django
+django.setup()
+from functools import reduce
 from sefaria.model import *
 from tqdm import tqdm
 from spacy.lang.he import Hebrew
@@ -43,7 +45,12 @@ def id_to_gen(_id):
         return 'web'
     else:
         oref = Ref(_id)
-        return 'other'
+        # return "|".join(oref.index.authors)
+        tp = oref.index.best_time_period()
+        if tp.start < 1500:
+            return 'rishonim'
+        else:
+            return 'achronim'
 
 def make_evaluation_files(evaluation_data, ner_model, output_folder, start=0, lang='he'):
     from collections import defaultdict
@@ -92,10 +99,22 @@ def make_evaluation_files(evaluation_data, ner_model, output_folder, start=0, la
     print('F1       ', 100*round(tp/(tp + 0.5 * (fp + fn)),4))
 
     for gen, metrics in eval_by_gen.items():
+        total = reduce(lambda a, b: a + b, metrics.values(), 0)
+        if total == 0: continue
         print('-----', gen, '-----')
-        print('PRECISION', 100*round(metrics['tp']/(metrics['tp']+metrics['fp']), 4))
-        print('RECALL   ', 100*round(metrics['tp']/(metrics['tp']+metrics['fn']), 4))
-        print('F1       ', 100*round(metrics['tp']/(metrics['tp'] + 0.5 * (metrics['fp'] + metrics['fn'])),4))
+        print('Total    ', total)
+        try:
+            print('PRECISION', 100*round(metrics['tp']/(metrics['tp']+metrics['fp']), 4))
+        except ZeroDivisionError:
+            print('PRECISION N/A')
+        try:
+            print('RECALL   ', 100*round(metrics['tp']/(metrics['tp']+metrics['fn']), 4))
+        except ZeroDivisionError:
+            print('RECALL    N/A')
+        try:
+            print('F1       ', 100*round(metrics['tp']/(metrics['tp'] + 0.5 * (metrics['fp'] + metrics['fn'])),4))
+        except ZeroDivisionError:
+            print('F1        N/A')
     return tp, fp, tn, fn
 
 def export_tagged_data_as_html(tagged_data, output_folder, is_binary=True, start=0, lang='he'):
