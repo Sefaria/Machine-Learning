@@ -105,18 +105,20 @@ pretrain:
 train-ref-model:
   cmd: python -m spacy run train-ref-model
   script:
+    - python ../util/merge_collections.py -o merged_output -c achronim_output webpages_output
+      rishonim_output_gold gilyon_output
     - python -m spacy train configs/ref-v3.2.cfg --output models/webpages_he --paths.vectors
-      vectors/all_text_he_fasttext_model --paths.input_collection webpages_output
-      --nlp.lang he --paths.init_tok2vec models/pretrain_ref_he/model8.bin --code
-      ../util/spacy_registry.py --gpu-id 0
+      vectors/all_text_he_fasttext_model --paths.input_collection merged_output --nlp.lang
+      he --paths.init_tok2vec models/pretrain_ref_he/model8.bin --code ../util/spacy_registry.py
+      --gpu-id 0
   deps:
     - path: configs/ref-v3.2.cfg
-      md5: 947ef3bc5ae6061aabbd4bfccb24fcd1
+      md5: 32a9d878f9c5f70b36f0ccc53ba60730
     - path: models/pretrain_ref_he
       md5: f141fc80ccfe57855dabf3eadcd6eb99
   outs:
     - path: models/webpages_he
-      md5: 3c95b0f41f04f9b4ea21cea654cfa171
+      md5: dc82a40a57f661c82f29371087c9e939
   spacy_version: 3.2.3
   spacy_git_version: 99425de36
 upload-models:
@@ -147,11 +149,11 @@ train-subref-model:
       --code ../util/spacy_registry.py --gpu-id 0
   deps:
     - path: configs/subref-v3.2.cfg
-      md5: 8bb9a28efa82a4c66f3d6e806a949848
+      md5: cc420c95e6fff39ec79e3bea0216e4b2
     - path: models/pretrain_ref_he
       md5: f141fc80ccfe57855dabf3eadcd6eb99
   outs:
     - path: models/webpages_subref_he
-      md5: 1ec165f4756a00a5726ea33bc2f0aa3f
+      md5: 0c98164bec7c301ba3e8e539c4a33945
   spacy_version: 3.2.3
   spacy_git_version: 99425de36

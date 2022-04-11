@@ -5,6 +5,7 @@ Functions for analyzing models
 from typing import Callable, Iterator, List
 from spacy.util import ensure_path
 import spacy, re, srsly, json, csv
+from sefaria.model import *
 from tqdm import tqdm
 from spacy.lang.he import Hebrew
 from sklearn.model_selection import train_test_split
@@ -37,8 +38,17 @@ def stream_data(db_host: str, db_port: int, input_collection: str, output_collec
 
     return generate_stream
 
+def id_to_gen(_id):
+    if _id.startswith('http'):
+        return 'web'
+    else:
+        oref = Ref(_id)
+        return 'other'
+
 def make_evaluation_files(evaluation_data, ner_model, output_folder, start=0, lang='he'):
+    from collections import defaultdict
     tp,fp,fn,tn = 0,0,0,0
+    eval_by_gen = defaultdict(lambda: {"tp": 0, "fp": 0, "fn": 0, "tn": 0})
     data_tuples = [(eg.text, eg) for eg in evaluation_data]
     output_json = []
     # see https://spacy.io/api/language#pipe
@@ -62,6 +72,10 @@ def make_evaluation_files(evaluation_data, ner_model, output_folder, start=0, la
         # true negatives
         temp_tn = [ent for ent in correct_ents if ent in predicted_ents]
         tn += len(temp_tn)
+
+        # breakdown by gen
+        for metric, temp in zip(('tp', 'fp', 'fn', 'tn'), (temp_tp, temp_fp, temp_fn, temp_tn)):
+            eval_by_gen[id_to_gen(example.predicted.user_data['Ref'])][metric] += len(temp)
         output_json += [{
             "text": doc.text,
             "tp": [list(ent) for ent in temp_tp],
@@ -76,6 +90,12 @@ def make_evaluation_files(evaluation_data, ner_model, output_folder, start=0, la
     print('PRECISION', 100*round(tp/(tp+fp), 4))
     print('RECALL   ', 100*round(tp/(tp+fn), 4))
     print('F1       ', 100*round(tp/(tp + 0.5 * (fp + fn)),4))
+
+    for gen, metrics in eval_by_gen.items():
+        print('-----', gen, '-----')
+        print('PRECISION', 100*round(metrics['tp']/(metrics['tp']+metrics['fp']), 4))
+        print('RECALL   ', 100*round(metrics['tp']/(metrics['tp']+metrics['fn']), 4))
+        print('F1       ', 100*round(metrics['tp']/(metrics['tp'] + 0.5 * (metrics['fp'] + metrics['fn'])),4))
     return tp, fp, tn, fn
 
 def export_tagged_data_as_html(tagged_data, output_folder, is_binary=True, start=0, lang='he'):
@@ -212,8 +232,8 @@ def convert_jsonl_to_csv(filename):
 if __name__ == "__main__":
     # nlp = spacy.load('./output/yerushalmi_refs/model-last')
     # nlp = spacy.load('./output/webpages/model-last')
-    nlp = spacy.load('/home/nss/sefaria/ML/linker/models/webpages_subref_he/model-last')
-    data = stream_data('localhost', 27017, 'webpages_sub_citation_output', 'gilyon_input', 614, 0.8, 'train', 0)(nlp)
+    nlp = spacy.load('/home/nss/sefaria/ML/linker/models/webpages_he/model-last')
+    data = stream_data('localhost', 27017, 'merged_output', 'gilyon_input', 615, 0.8, 'test', 0)(nlp)
     print(make_evaluation_files(data, nlp, './temp', lang='he'))
 
     # data = stream_data('localhost', 27017, 'yerushalmi_output', 'gilyon_input', -1, 1.0, 'train', 0, unique_by_metadata=True)(nlp)
