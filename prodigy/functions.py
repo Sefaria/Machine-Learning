@@ -52,7 +52,7 @@ def id_to_gen(_id):
         else:
             return 'achronim'
 
-def make_evaluation_files(evaluation_data, ner_model, output_folder, start=0, lang='he'):
+def make_evaluation_files(evaluation_data, ner_model, output_folder, start=0, lang='he', only_errors=False):
     from collections import defaultdict
     tp,fp,fn,tn = 0,0,0,0
     eval_by_gen = defaultdict(lambda: {"tp": 0, "fp": 0, "fn": 0, "tn": 0})
@@ -83,6 +83,8 @@ def make_evaluation_files(evaluation_data, ner_model, output_folder, start=0, la
         # breakdown by gen
         for metric, temp in zip(('tp', 'fp', 'fn', 'tn'), (temp_tp, temp_fp, temp_fn, temp_tn)):
             eval_by_gen[id_to_gen(example.predicted.user_data['Ref'])][metric] += len(temp)
+        if only_errors and (len(temp_fn) + len(temp_fp)) == 0:
+            continue
         output_json += [{
             "text": doc.text,
             "tp": [list(ent) for ent in temp_tp],
@@ -252,8 +254,8 @@ if __name__ == "__main__":
     # nlp = spacy.load('./output/yerushalmi_refs/model-last')
     # nlp = spacy.load('./output/webpages/model-last')
     nlp = spacy.load('/home/nss/sefaria/ML/linker/models/webpages_he/model-last')
-    data = stream_data('localhost', 27017, 'merged_output', 'gilyon_input', 615, 0.8, 'test', 0)(nlp)
-    print(make_evaluation_files(data, nlp, './temp', lang='he'))
+    data = stream_data('localhost', 27017, 'merged_output', 'gilyon_input', 6160348, 0.8, 'test', 20)(nlp)
+    print(make_evaluation_files(data, nlp, './temp', lang='he', only_errors=True))
 
     # data = stream_data('localhost', 27017, 'yerushalmi_output', 'gilyon_input', -1, 1.0, 'train', 0, unique_by_metadata=True)(nlp)
     # export_tagged_data_as_html(data, './output/evaluation_results', is_binary=False, start=0, lang='en')  # 897

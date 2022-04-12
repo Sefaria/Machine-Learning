@@ -106,19 +106,19 @@ train-ref-model:
   cmd: python -m spacy run train-ref-model
   script:
     - python ../util/merge_collections.py -o merged_output -c achronim_output webpages_output
-      rishonim_output_gold gilyon_output
+      rishonim_output_silver gilyon_output
     - python -m spacy train configs/ref-v3.2.cfg --output models/webpages_he --paths.vectors
       vectors/all_text_he_fasttext_model --paths.input_collection merged_output --nlp.lang
       he --paths.init_tok2vec models/pretrain_ref_he/model8.bin --code ../util/spacy_registry.py
       --gpu-id 0
   deps:
     - path: configs/ref-v3.2.cfg
-      md5: 32a9d878f9c5f70b36f0ccc53ba60730
+      md5: 9a07f229ca594487baef9e1635ee8f42
     - path: models/pretrain_ref_he
       md5: f141fc80ccfe57855dabf3eadcd6eb99
   outs:
     - path: models/webpages_he
-      md5: dc82a40a57f661c82f29371087c9e939
+      md5: 7318b28953b8510ad3d1ab029bddd3d3
   spacy_version: 3.2.3
   spacy_git_version: 99425de36
 upload-models:
