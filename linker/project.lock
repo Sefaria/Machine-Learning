@@ -118,7 +118,7 @@ train-ref-model:
       md5: f141fc80ccfe57855dabf3eadcd6eb99
   outs:
     - path: models/webpages_he
-      md5: 7318b28953b8510ad3d1ab029bddd3d3
+      md5: f81db9f744074e25860e3da2479984da
   spacy_version: 3.2.3
   spacy_git_version: 99425de36
 upload-models:
@@ -143,9 +143,11 @@ upload-models:
 train-subref-model:
   cmd: python -m spacy run train-subref-model
   script:
+    - python ../util/merge_collections.py -o merged_output -c webpages_sub_citation_output
+      gilyon_sub_citation_output
     - python -m spacy train configs/subref-v3.2.cfg --output models/webpages_subref_he
       --paths.vectors vectors/all_text_he_fasttext_model --paths.input_collection
-      webpages_sub_citation_output --nlp.lang he --paths.init_tok2vec models/pretrain_ref_he/model8.bin
+      merged_output --nlp.lang he --paths.init_tok2vec models/pretrain_ref_he/model8.bin
       --code ../util/spacy_registry.py --gpu-id 0
   deps:
     - path: configs/subref-v3.2.cfg
@@ -154,6 +156,6 @@ train-subref-model:
       md5: f141fc80ccfe57855dabf3eadcd6eb99
   outs:
     - path: models/webpages_subref_he
-      md5: 0c98164bec7c301ba3e8e539c4a33945
+      md5: 53c4b38800a821402841f05d19da212c
   spacy_version: 3.2.3
   spacy_git_version: 99425de36

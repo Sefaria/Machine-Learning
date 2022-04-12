@@ -6,6 +6,7 @@ vars:
   name: "webpages"
   lang: "he"
   ref_training_collections: "achronim_output webpages_output rishonim_output_silver gilyon_output"
+  subref_training_collections: "webpages_sub_citation_output gilyon_sub_citation_output"
   annotator_pod: "annotator-bodum-0"
   # number of processes (tokenization) and threads (fasttext)
   n_process: 8
@@ -110,7 +111,8 @@ commands:
 
   - name: "train-subref-model"
     script:
-      - "python -m spacy train configs/subref-v3.2.cfg --output models/${vars.name}_subref_${vars.lang} --paths.vectors vectors/all_text_${vars.lang}_fasttext_model --paths.input_collection ${vars.name}_sub_citation_output --nlp.lang ${vars.lang} --paths.init_tok2vec models/pretrain_ref_${vars.lang}/model8.bin --code ../util/spacy_registry.py --gpu-id 0"
+      - "python ../util/merge_collections.py -o merged_subref_output -c ${vars.subref_training_collections}"
+      - "python -m spacy train configs/subref-v3.2.cfg --output models/${vars.name}_subref_${vars.lang} --paths.vectors vectors/all_text_${vars.lang}_fasttext_model --paths.input_collection merged_subref_output --nlp.lang ${vars.lang} --paths.init_tok2vec models/pretrain_ref_${vars.lang}/model8.bin --code ../util/spacy_registry.py --gpu-id 0"
     deps:
       - "configs/subref-v3.2.cfg"
       - "models/pretrain_ref_${vars.lang}"
