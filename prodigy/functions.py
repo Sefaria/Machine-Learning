@@ -253,7 +253,7 @@ def convert_jsonl_to_csv(filename):
 if __name__ == "__main__":
     # nlp = spacy.load('./output/yerushalmi_refs/model-last')
     # nlp = spacy.load('./output/webpages/model-last')
-    nlp = spacy.load('/home/nss/sefaria/ML/linker/models/webpages_he/model-last')
+    nlp = spacy.load('/home/nss/sefaria/ML/linker/models/webpages_he_achronim/model-last')
     data = stream_data('localhost', 27017, 'merged_output', 'gilyon_input', 61, 0.8, 'test', 20)(nlp)
     print(make_evaluation_files(data, nlp, './temp', lang='he', only_errors=True))
 

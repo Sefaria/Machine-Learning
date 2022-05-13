@@ -5,7 +5,8 @@ spacy_version: ">=3.2.0,<4.0.0"
 vars:
   name: "webpages"
   lang: "he"
-  ref_training_collections: "achronim_output webpages_output rishonim_output_silver gilyon_output"
+  # ref_training_collections: "achronim_output webpages_output rishonim_output_silver gilyon_output"
+  ref_training_collections: "webpages_output achronim_output gilyon_output:100"
   subref_training_collections: "webpages_sub_citation_output gilyon_sub_citation_output"
   annotator_pod: "annotator-bodum-0"
   # number of processes (tokenization) and threads (fasttext)
@@ -102,7 +103,7 @@ commands:
   - name: "train-ref-model"
     script:
       - "python ../util/merge_collections.py -o merged_output -c ${vars.ref_training_collections}"
-      - "python -m spacy train configs/ref-v3.2.cfg --output models/${vars.name}_${vars.lang} --paths.vectors vectors/all_text_${vars.lang}_fasttext_model --paths.input_collection merged_output --nlp.lang ${vars.lang} --paths.init_tok2vec models/pretrain_ref_${vars.lang}/model8.bin --code ../util/spacy_registry.py --gpu-id 0"
+      - "python -m spacy train configs/ref-v3.2.cfg --output models/${vars.name}_${vars.lang}_achronim --paths.vectors vectors/all_text_${vars.lang}_fasttext_model --paths.input_collection merged_output --nlp.lang ${vars.lang} --paths.init_tok2vec models/pretrain_ref_${vars.lang}/model8.bin --code ../util/spacy_registry.py --gpu-id 0"
     deps:
       - "configs/ref-v3.2.cfg"
       - "models/pretrain_ref_${vars.lang}"
