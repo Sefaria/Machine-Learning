@@ -159,3 +159,21 @@ train-subref-model:
       md5: 53c4b38800a821402841f05d19da212c
   spacy_version: 3.2.3
   spacy_git_version: 99425de36
+train-blank-pretrained-model:
+  cmd: python -m spacy run train-blank-pretrained-model
+  script:
+    - python ../util/merge_collections.py -o merged_output -c achronim_output:2
+    - python -m spacy train configs/ref-v3.2.cfg --output models/pretrain_usable --paths.vectors
+      vectors/all_text_he_fasttext_model --paths.input_collection merged_output --nlp.lang
+      he --paths.init_tok2vec models/pretrain_ref_he/model8.bin --training.max_steps
+      1 --code ../util/spacy_registry.py --gpu-id 0
+  deps:
+    - path: configs/ref-v3.2.cfg
+      md5: 877138d37cd69e047c0cd5c5cc09bd8c
+    - path: models/pretrain_ref_he
+      md5: f141fc80ccfe57855dabf3eadcd6eb99
+  outs:
+    - path: models/pretrain_usable
+      md5: 1c72c5ac3459f07fecebb1f6e318d28d
+  spacy_version: 3.2.3
+  spacy_git_version: 99425de36

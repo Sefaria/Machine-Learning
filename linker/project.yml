@@ -110,6 +110,16 @@ commands:
     outputs:
       - "models/${vars.name}_${vars.lang}"
 
+  - name: "train-blank-pretrained-model"
+    script:
+      - "python ../util/merge_collections.py -o merged_output -c achronim_output:2"
+      - "python -m spacy train configs/ref-v3.2.cfg --output models/pretrain_usable --paths.vectors vectors/all_text_${vars.lang}_fasttext_model --paths.input_collection merged_output --nlp.lang ${vars.lang} --paths.init_tok2vec models/pretrain_ref_${vars.lang}/model8.bin --training.max_steps 1 --code ../util/spacy_registry.py --gpu-id 0"
+    deps:
+      - "configs/ref-v3.2.cfg"
+      - "models/pretrain_ref_${vars.lang}"
+    outputs:
+      - "models/pretrain_usable"
+
   - name: "train-subref-model"
     script:
       - "python ../util/merge_collections.py -o merged_subref_output -c ${vars.subref_training_collections}"
