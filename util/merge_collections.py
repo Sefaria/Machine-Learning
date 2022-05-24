@@ -24,6 +24,7 @@ if __name__ == "__main__":
     unique_keys = set()
     for in_collection in args.input:
         in_collection, limit = in_collection.split(':') if ':' in in_collection else (in_collection, None)
+        limit = limit if limit is None else int(limit)
         input_db = MongoProdigyDBManager(in_collection)
         temp_docs = list(input_db.output_collection.find({}))[:limit]
         for doc in temp_docs:
