@@ -105,18 +105,20 @@ pretrain:
 train-ref-model:
   cmd: python -m spacy run train-ref-model
   script:
-    - python -m spacy train configs/ref-v3.2.cfg --output models/webpages_he --paths.vectors
-      vectors/all_text_he_fasttext_model --paths.input_collection webpages_output
-      --nlp.lang he --paths.init_tok2vec models/pretrain_ref_he/model8.bin --code
-      ../util/spacy_registry.py --gpu-id 0
+    - python ../util/merge_collections.py -o merged_output -c webpages_output achronim_output
+      gilyon_output:100
+    - python -m spacy train configs/ref-v3.2.cfg --output models/webpages_he_achronim
+      --paths.vectors vectors/all_text_he_fasttext_model --paths.input_collection
+      merged_output --nlp.lang he --paths.init_tok2vec models/pretrain_ref_he/model8.bin
+      --code ../util/spacy_registry.py --gpu-id 0
   deps:
     - path: configs/ref-v3.2.cfg
-      md5: 947ef3bc5ae6061aabbd4bfccb24fcd1
+      md5: 877138d37cd69e047c0cd5c5cc09bd8c
     - path: models/pretrain_ref_he
       md5: f141fc80ccfe57855dabf3eadcd6eb99
   outs:
     - path: models/webpages_he
-      md5: 3c95b0f41f04f9b4ea21cea654cfa171
+      md5: 26bbcc77b5b4dcbbb0fbb97d79825225
   spacy_version: 3.2.3
   spacy_git_version: 99425de36
 upload-models:
@@ -141,17 +143,37 @@ upload-models:
 train-subref-model:
   cmd: python -m spacy run train-subref-model
   script:
+    - python ../util/merge_collections.py -o merged_output -c webpages_sub_citation_output
+      gilyon_sub_citation_output
     - python -m spacy train configs/subref-v3.2.cfg --output models/webpages_subref_he
       --paths.vectors vectors/all_text_he_fasttext_model --paths.input_collection
-      webpages_sub_citation_output --nlp.lang he --paths.init_tok2vec models/pretrain_ref_he/model8.bin
+      merged_output --nlp.lang he --paths.init_tok2vec models/pretrain_ref_he/model8.bin
       --code ../util/spacy_registry.py --gpu-id 0
   deps:
     - path: configs/subref-v3.2.cfg
-      md5: 8bb9a28efa82a4c66f3d6e806a949848
+      md5: cc420c95e6fff39ec79e3bea0216e4b2
     - path: models/pretrain_ref_he
       md5: f141fc80ccfe57855dabf3eadcd6eb99
   outs:
     - path: models/webpages_subref_he
-      md5: 1ec165f4756a00a5726ea33bc2f0aa3f
+      md5: 53c4b38800a821402841f05d19da212c
+  spacy_version: 3.2.3
+  spacy_git_version: 99425de36
+train-blank-pretrained-model:
+  cmd: python -m spacy run train-blank-pretrained-model
+  script:
+    - python ../util/merge_collections.py -o merged_output -c achronim_output:2
+    - python -m spacy train configs/ref-v3.2.cfg --output models/pretrain_usable --paths.vectors
+      vectors/all_text_he_fasttext_model --paths.input_collection merged_output --nlp.lang
+      he --paths.init_tok2vec models/pretrain_ref_he/model8.bin --training.max_steps
+      1 --code ../util/spacy_registry.py --gpu-id 0
+  deps:
+    - path: configs/ref-v3.2.cfg
+      md5: 877138d37cd69e047c0cd5c5cc09bd8c
+    - path: models/pretrain_ref_he
+      md5: f141fc80ccfe57855dabf3eadcd6eb99
+  outs:
+    - path: models/pretrain_usable
+      md5: 1c72c5ac3459f07fecebb1f6e318d28d
   spacy_version: 3.2.3
   spacy_git_version: 99425de36

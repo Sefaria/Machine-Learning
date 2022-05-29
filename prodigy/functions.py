@@ -4,13 +4,17 @@ Functions for analyzing models
 
 from typing import Callable, Iterator, List
 from spacy.util import ensure_path
-import spacy, re, srsly, json, csv
+import spacy, re, srsly, json, csv, django
+django.setup()
+from functools import reduce
+from sefaria.model import *
 from tqdm import tqdm
 from spacy.lang.he import Hebrew
 from sklearn.model_selection import train_test_split
 from spacy.training import Example
 from spacy.language import Language
 from db_manager import MongoProdigyDBManager
+from util.spacy_registry import inner_punct_tokenizer_factory
 
 @spacy.registry.readers("mongo_reader")
 def stream_data(db_host: str, db_port: int, input_collection: str, output_collection: str, random_state: int, train_perc: float, corpus_type: str, min_len: int, unique_by_metadata=True) -> Callable[[Language], Iterator[Example]]:
@@ -36,8 +40,22 @@ def stream_data(db_host: str, db_port: int, input_collection: str, output_collec
 
     return generate_stream
 
-def make_evaluation_files(evaluation_data, ner_model, output_folder, start=0, lang='he'):
+def id_to_gen(_id):
+    if _id.startswith('http'):
+        return 'web'
+    else:
+        oref = Ref(_id)
+        # return "|".join(oref.index.authors)
+        tp = oref.index.best_time_period()
+        if tp.start < 1500:
+            return 'rishonim'
+        else:
+            return 'achronim'
+
+def make_evaluation_files(evaluation_data, ner_model, output_folder, start=0, lang='he', only_errors=False):
+    from collections import defaultdict
     tp,fp,fn,tn = 0,0,0,0
+    eval_by_gen = defaultdict(lambda: {"tp": 0, "fp": 0, "fn": 0, "tn": 0})
     data_tuples = [(eg.text, eg) for eg in evaluation_data]
     output_json = []
     # see https://spacy.io/api/language#pipe
@@ -61,6 +79,12 @@ def make_evaluation_files(evaluation_data, ner_model, output_folder, start=0, la
         # true negatives
         temp_tn = [ent for ent in correct_ents if ent in predicted_ents]
         tn += len(temp_tn)
+
+        # breakdown by gen
+        for metric, temp in zip(('tp', 'fp', 'fn', 'tn'), (temp_tp, temp_fp, temp_fn, temp_tn)):
+            eval_by_gen[id_to_gen(example.predicted.user_data['Ref'])][metric] += len(temp)
+        if only_errors and (len(temp_fn) + len(temp_fp)) == 0:
+            continue
         output_json += [{
             "text": doc.text,
             "tp": [list(ent) for ent in temp_tp],
@@ -75,6 +99,24 @@ def make_evaluation_files(evaluation_data, ner_model, output_folder, start=0, la
     print('PRECISION', 100*round(tp/(tp+fp), 4))
     print('RECALL   ', 100*round(tp/(tp+fn), 4))
     print('F1       ', 100*round(tp/(tp + 0.5 * (fp + fn)),4))
+
+    for gen, metrics in eval_by_gen.items():
+        total = reduce(lambda a, b: a + b, metrics.values(), 0)
+        if total == 0: continue
+        print('-----', gen, '-----')
+        print('Total    ', total)
+        try:
+            print('PRECISION', 100*round(metrics['tp']/(metrics['tp']+metrics['fp']), 4))
+        except ZeroDivisionError:
+            print('PRECISION N/A')
+        try:
+            print('RECALL   ', 100*round(metrics['tp']/(metrics['tp']+metrics['fn']), 4))
+        except ZeroDivisionError:
+            print('RECALL    N/A')
+        try:
+            print('F1       ', 100*round(metrics['tp']/(metrics['tp'] + 0.5 * (metrics['fp'] + metrics['fn'])),4))
+        except ZeroDivisionError:
+            print('F1        N/A')
     return tp, fp, tn, fn
 
 def export_tagged_data_as_html(tagged_data, output_folder, is_binary=True, start=0, lang='he'):
@@ -211,60 +253,12 @@ def convert_jsonl_to_csv(filename):
 if __name__ == "__main__":
     # nlp = spacy.load('./output/yerushalmi_refs/model-last')
     # nlp = spacy.load('./output/webpages/model-last')
-    nlp = spacy.load('/home/nss/sefaria/ML/linker/models/webpages_he/model-last')
-    data = stream_data('localhost', 27017, 'webpages_output', 'gilyon_input', 614, 0.8, 'test', 0)(nlp)
-    print(make_evaluation_files(data, nlp, './output/evaluation_results', lang='he'))
+    nlp = spacy.load('/home/nss/sefaria/ML/linker/models/webpages_he_achronim/model-last')
+    data = stream_data('localhost', 27017, 'merged_output', 'gilyon_input', 61, 0.8, 'test', 20)(nlp)
+    print(make_evaluation_files(data, nlp, './temp', lang='he', only_errors=True))
 
     # data = stream_data('localhost', 27017, 'yerushalmi_output', 'gilyon_input', -1, 1.0, 'train', 0, unique_by_metadata=True)(nlp)
     # export_tagged_data_as_html(data, './output/evaluation_results', is_binary=False, start=0, lang='en')  # 897
     # convert_jsonl_to_json('./output/evaluation_results/doc_evaluation.jsonl')
     # convert_jsonl_to_csv('./output/evaluation_results/doc_evaluation.jsonl')
     # spacy.training.offsets_to_biluo_tags(doc, entities)
-"""
-to run gpu
-python -m spacy train ./configs/ref_tagging.cfg --output ./output/ref_tagging --code ./functions.py --gpu-id 0
-
-to run cpu
-python -m spacy train ./configs/ref_tagging_cpu.cfg --output ./output/ref_tagging_cpu --code ./functions.py --gpu-id 0
-Num examples 1682
- 34    7600        136.44      6.50   82.05   82.85   81.27    0.82
-
-to train sub citation
-python -m spacy train ./configs/talmud_ner-v3.2.cfg --output ./output/sub_citation --code ./functions.py --gpu-id 0
-
-debug data
-python -m spacy debug data ./configs/ref_tagging_cpu.cfg -c ./functions.py
-
-pretrain cpu
-python -m spacy pretrain ./configs/talmud_ner-v3.2.cfg  ./output/pretrain_ref_tagging_cpu --code ./functions.py --gpu-id 0
-
-convert fasttext vectors
-python -m spacy init vectors he "/home/nss/sefaria/datasets/text classification/fasttext_he_no_prefixes_300.vec" "/home/nss/sefaria/datasets/text classification/prodigy/dim300" --verbose
-
-pretrain process
-- download latest mongodump
-- export to jsonl file. see fasttext_trainer.export_library_as_file
-- train fasttext. see fasttext_trainer.train_fasttext
-- convert fasttext to .vec file. see fasttext_trainer.convert_fasttext_bin_to_vec
-- run "convert fasttext vectors" above
-- run "pretrain cpu" above
-
-
-train on binary process
-- run one_time_scripts.merge_gold_full_into_silver_binary()
-cd /home/nss/sefaria/data
-prodigy data-to-spacy output/binary_training --ner ref_tagging --ner-missing --base-model output/ref_tagging_cpu/model-last -F functions.py
-cd ../..
-python -m spacy train ./output/binary_training/my_config.cfg --output ./output/ref_tagging_cpu_binary --code ./functions.py --gpu-id 0 --paths.train ./output/binary_training/train.spacy --paths.dev ./output/binary_training/dev.spacy
-
-SPECIFIC TRAINING
-
-rishonim refs
-python -m spacy train ./configs/talmud_ner-v3.2.cfg --output ./output/webpages --code ./functions.py --gpu-id 0
-
-yerushalmi refs
-python -m spacy train ./configs/talmud_ner-v3.2.cfg --output ./output/yerushalmi_refs2 --code ./functions.py --gpu-id 0
-
-yerushalmi sub_refs
-python -m spacy train ./configs/sub_citation-v3.2.cfg --output ./output/yerushalmi_sub_refs --code ./functions.py --gpu-id 0
-"""
