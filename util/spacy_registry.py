@@ -4,6 +4,7 @@ from db_manager import MongoProdigyDBManager
 from sklearn.model_selection import train_test_split
 from spacy.training import Example
 from spacy.language import Language
+from spacy_langdetect import LanguageDetector
 from typing import Callable, Iterator, List
 
 @spacy.registry.tokenizers("inner_punct_tokenizer")
@@ -44,3 +45,8 @@ def stream_data(db_host: str, db_port: int, input_collection: str, output_collec
             yield example
 
     return generate_stream
+
+
+@Language.factory("language_detector")
+def create_language_detector(nlp, name):
+    return LanguageDetector(language_detection_function=None)

@@ -1,25 +1,28 @@
-import argparse, re, os
+import argparse, os
 from concurrent.futures import ThreadPoolExecutor, wait
-from time import sleep, time
+from time import time
 from tqdm import tqdm
-from scraper import connect_to_url, get_driver, get_text_to_save, parse_html, write_to_file, get_filename
+from scraper import connect_to_url, get_driver, get_text_to_save, write_to_file, get_filename
 
 
 def run_process(url, headless):
-    if os.path.isfile(get_filename(url)):
+    filename = get_filename(url)
+    if os.path.isfile(filename):
         return
 
     browser = get_driver(headless)
-
-    if connect_to_url(browser, url):
-        html = browser.page_source
-        text = get_text_to_save(url, html)
-        write_to_file(url, text)
-    else:
-        pass
-        # print("Error connecting to Wikipedia")
-    browser.close()
-    browser.quit()
+    try:
+        if connect_to_url(browser, url):
+            html = browser.page_source
+            text = get_text_to_save(url, html)
+            if len(text) != 0:
+                write_to_file(filename, text)
+        else:
+            pass
+            # print("Error connecting to Wikipedia")
+    finally:
+        browser.close()
+        browser.quit()
 
 
 def init_argparse() -> argparse.ArgumentParser:
@@ -36,25 +39,23 @@ if __name__ == "__main__":
 
     # set variables
     start_time = time()
+    with open(args.urlfilename, 'r') as fin:
+        urls = [url.strip() for url in fin]
     if args.concurrent:
         print("fast mode")
         futures = []
 
         # scrape and crawl
-        with ThreadPoolExecutor() as executor:
-            with open(args.urlfilename, 'r') as fin:
-                for url in fin:
-                    url = url.strip()
-                    futures.append(
-                        executor.submit(run_process, url, args.headless)
-                    )
+        with ThreadPoolExecutor(max_workers=50) as executor:
+            for url in urls:
+                futures.append(
+                    executor.submit(run_process, url, args.headless)
+                )
         wait(futures)
     else:
         print("slow mode")
-        with open(args.urlfilename, 'r') as fin:
-            for url in tqdm(list(fin)):
-                url = url.strip()
-                run_process(url, args.headless)
+        for url in tqdm(urls):
+            run_process(url, args.headless)
     end_time = time()
     elapsed_time = end_time - start_time
     print(f"Elapsed run time: {elapsed_time} seconds")

@@ -2,6 +2,8 @@ from pathlib import Path
 
 import hashlib, re, os
 from readability import Document
+from util.spacy_registry import create_language_detector
+import spacy
 
 from time import sleep
 import requests
@@ -9,6 +11,9 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 
 BASE_DIR = Path(__file__).resolve(strict=True).parent
+spacy.prefer_gpu()
+nlp = spacy.load('en_core_web_sm')
+nlp.add_pipe('language_detector', last=True)
 
 
 def get_driver(headless):
@@ -23,57 +28,23 @@ def get_driver(headless):
 
 
 def connect_to_url(browser, url):
-
     connection_attempts = 0
     while connection_attempts < 1:
         try:
             browser.get(url)
-            sleep(5)
             return True
         except Exception as e:
             connection_attempts += 1
     return False
 
 
-def parse_html(html):
-    # create soup object
-    soup = BeautifulSoup(html, "html.parser")
-    output_list = []
-    # parse soup object to get wikipedia article url, title, and last modified date
-    article_url = soup.find("link", {"rel": "canonical"})["href"]
-    article_title = soup.find("h1", {"id": "firstHeading"}).text
-    article_last_modified = soup.find("li", {"id": "footer-info-lastmod"}).text
-    article_info = {
-        "url": article_url,
-        "title": article_title,
-        "last_modified": article_last_modified,
-    }
-    output_list.append(article_info)
-    return output_list
-
-
-def get_load_time(article_url):
-    try:
-        # set headers
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.89 Safari/537.36"
-        }
-        # make get request to article_url
-        response = requests.get(
-            article_url, headers=headers, stream=True, timeout=3.000
-        )
-        # get page load time
-        load_time = response.elapsed.total_seconds()
-    except Exception as e:
-        print(e)
-        load_time = "Loading Error"
-    return load_time
-
-
 def get_text_to_save(url, html):
+    if len(html) == 0: return ""
     doc = Document(html)
     text = re.sub(r"<[^>]+>", "", doc.summary(html_partial=True))
-    return f"{url}\n{doc.title()}\n{text}"  # add url to top line of file
+    if len(text) == 0: return ""
+    lang = detect_language(text)
+    return f"{url}\n{doc.title()}\n{lang['language']} {lang['score']:{1}.{2}}\n{text}"  # add url to top line of file
 
 
 def get_filename(url):
@@ -81,6 +52,11 @@ def get_filename(url):
     return Path(BASE_DIR).joinpath(f"output/{hash_filename}.txt")
 
 
-def write_to_file(url, text):
-    with open(get_filename(url), "w") as fout:
+def write_to_file(filename, text):
+    with open(filename, "w") as fout:
         fout.write(text)
+
+
+def detect_language(text):
+    doc = nlp(text)
+    return doc._.language
