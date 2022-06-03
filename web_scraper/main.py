@@ -30,28 +30,25 @@ def init_argparse() -> argparse.ArgumentParser:
     parser.add_argument("-e", "--headless", dest="headless", help="headless?", default=False, action='store_true')
     parser.add_argument("-c", "--concurrent", dest="concurrent", help="concurrent?", default=False, action='store_true')
     parser.add_argument("-u", "--urlfilename", dest="urlfilename", help="url filename")
+    parser.add_argument("-s", "--skip", dest="skip", default=0)
     return parser
 
 
 if __name__ == "__main__":
     parser = init_argparse()
     args = parser.parse_args()
-
+    skip = int(args.skip)
+    print("SKIP", skip)
     # set variables
     start_time = time()
     with open(args.urlfilename, 'r') as fin:
-        urls = [url.strip() for url in fin]
+        urls = [url.strip() for url in fin][skip:]
     if args.concurrent:
         print("fast mode")
-        futures = []
-
         # scrape and crawl
-        with ThreadPoolExecutor(max_workers=50) as executor:
-            for url in urls:
-                futures.append(
-                    executor.submit(run_process, url, args.headless)
-                )
-        wait(futures)
+        with ThreadPoolExecutor(50) as executor:
+            _ = [executor.submit(run_process, url, args.headless) for url in urls]
+            #wait(futures)
     else:
         print("slow mode")
         for url in tqdm(urls):
