@@ -2,7 +2,7 @@ import argparse, os
 from concurrent.futures import ThreadPoolExecutor, wait
 from time import time
 from tqdm import tqdm
-from scraper import connect_to_url, get_driver, get_text_to_save, write_to_file, get_filename
+from scraper import connect_to_url, get_driver, get_text_to_save, write_to_file, get_filename, BASE_DIR
 
 
 def run_process(url, headless):
@@ -34,6 +34,17 @@ def init_argparse() -> argparse.ArgumentParser:
     return parser
 
 
+def reorder_urls_file(urlfilename, urls):
+    from pathlib import Path
+    hashed_filenames = [os.path.basename(get_filename(url)) for url in urls]
+    existing_files = set(os.listdir(Path(BASE_DIR).joinpath("output")))
+    urls_and_hashes = list(zip(urls, hashed_filenames))
+    urls_and_hashes.sort(key=lambda x: int(x[1] in existing_files), reverse=True)
+    urls = [x[0] for x in urls_and_hashes]
+    with open(urlfilename, 'w') as fout:
+        fout.write("\n".join(urls))
+
+
 if __name__ == "__main__":
     parser = init_argparse()
     args = parser.parse_args()
@@ -42,17 +53,19 @@ if __name__ == "__main__":
     # set variables
     start_time = time()
     with open(args.urlfilename, 'r') as fin:
-        urls = [url.strip() for url in fin][skip:]
+        urls = [url.strip() for url in fin]
+        urls_to_scrape = urls[skip:]
     if args.concurrent:
         print("fast mode")
         # scrape and crawl
         with ThreadPoolExecutor(50) as executor:
-            _ = [executor.submit(run_process, url, args.headless) for url in urls]
+            _ = [executor.submit(run_process, url, args.headless) for url in urls_to_scrape]
             #wait(futures)
     else:
         print("slow mode")
-        for url in tqdm(urls):
+        for url in tqdm(urls_to_scrape):
             run_process(url, args.headless)
+    reorder_urls_file(args.urlfilename, urls)
     end_time = time()
     elapsed_time = end_time - start_time
     print(f"Elapsed run time: {elapsed_time} seconds")

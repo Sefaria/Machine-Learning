@@ -4,3 +4,4 @@ models/
 .idea/
 prodigy/temp/
 web_scraper/output
+web_scraper/urls.txt

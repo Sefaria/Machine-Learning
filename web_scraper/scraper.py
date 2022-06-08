@@ -32,6 +32,7 @@ def connect_to_url(browser, url):
     while connection_attempts < 1:
         try:
             browser.get(url)
+            sleep(5)
             return True
         except Exception as e:
             connection_attempts += 1
