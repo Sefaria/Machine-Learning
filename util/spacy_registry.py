@@ -50,3 +50,9 @@ def stream_data(db_host: str, db_port: int, input_collection: str, output_collec
 @Language.factory("language_detector")
 def create_language_detector(nlp, name):
     return LanguageDetector(language_detection_function=None)
+
+def get_lang_detect_nlp():
+    spacy.prefer_gpu()
+    nlp = spacy.load('en_core_web_sm')
+    nlp.add_pipe('language_detector', last=True)
+    return nlp

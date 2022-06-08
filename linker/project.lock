@@ -11,18 +11,18 @@ download-sefaria-dump:
 export-library:
   cmd: python -m spacy run export-library
   script:
-    - python scripts/library_exporter.py he -f both -w corpus/all_text_webpages_he.txt
-      -o corpus/all_text_he
+    - python scripts/library_exporter.py he -f both -w ../web_scraper/output -o corpus/all_text_he
+      -s
   deps:
     - path: scripts/restore_db.sh
       md5: 5cafcd94fb535ddb8a8c93def7173a16
   outs:
     - path: corpus/all_text_he.txt
-      md5: b7d8247426edd71f3997b13aa1e2c6ce
+      md5: 83624b4ae4db80d4589ed0f859124977
     - path: corpus/all_text_he.jsonl
-      md5: 2d9100310360f581768caa5c5b0e76e2
-  spacy_version: 3.2.0
-  spacy_git_version: 0fc3dee77
+      md5: 68be3fbb4b055f397f8b1060cd1fb7e1
+  spacy_version: 3.2.3
+  spacy_git_version: 99425de36
 train-floret:
   cmd: python -m spacy run train-floret
   script:

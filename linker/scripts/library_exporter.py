@@ -1,8 +1,9 @@
-import django, json, argparse
+import django, json, argparse, os
 django.setup()
 from tqdm import tqdm
+from collections import defaultdict
 
-from util.spacy_registry import inner_punct_tokenizer_factory
+from util.spacy_registry import inner_punct_tokenizer_factory, get_lang_detect_nlp
 from spacy.lang.en import English
 from spacy.lang.he import Hebrew
 from sefaria.model import *
@@ -11,13 +12,14 @@ from sefaria.helper.normalization import NormalizerByLang, NormalizerComposer
 
 class TextWalker:
 
-    def __init__(self, output_text, output_jsonl, lang, max_line_len=None, format='both', overlap=0):
+    def __init__(self, output_text, output_jsonl, lang, max_line_len=None, format='both', overlap=0, webpages_dir=None):
         self.output_text = output_text
         self.output_jsonl = output_jsonl
         self.lang = lang
         self.max_line_len = max_line_len
         self.format = format
         self.overlap = overlap
+        self.webpages_dir = webpages_dir
         base_normalizer_steps = ['unidecode', 'html', 'double-space']
         self.normalizer = NormalizerByLang({
             'en': NormalizerComposer(base_normalizer_steps),
@@ -53,24 +55,70 @@ class TextWalker:
     def action(self, text, en_tref, he_tref, version):
         self.write_lines(text)
 
-def export_library_as_file(lang, output_stem, max_line_len=None, format='both', overlap=0, webpages_text=None):
-    vs = VersionSet({"language": lang})
-    count = vs.count()
+    def walk_all_versions(self):
+        vs = VersionSet({"language": self.lang})
+        count = vs.count()
+        for v in tqdm(vs, total=count):
+            if v.versionTitle[-5:-3] == ' [':
+                continue
+            try:
+                v.walk_thru_contents(self.action)
+            except InputError:
+                continue
+
+    def walk_all_webpages(self):
+        from util.webpages_util import walk_all_webpages
+        for webpage in walk_all_webpages(self.webpages_dir, self.lang):
+            if not webpage.has_real_data(): continue
+            self.write_lines(webpage.get_text())
+
+    def walk_all_sheets(self):
+        """
+        outsideText, outsideBiText, comment
+        :return:
+        """
+        from sefaria.system.database import db
+        lang_counts = defaultdict(int)
+        nlp = get_lang_detect_nlp()
+        sheet_query = {"status": "public", "viaOwner": {"$exists": 0}, "assignment_id": {"$exists": 0}}
+        num_public = db.sheets.count_documents(sheet_query)
+        for sheet in tqdm(db.sheets.find(sheet_query), total=num_public):
+            try:
+                text = self.get_sheet_text(sheet)
+            except:
+                continue
+            if 200 > len(text) > 100000: continue
+            doc = nlp(text)
+            lang = doc._.language['language']
+            lang_counts[lang] += 1
+            if lang != self.lang: continue
+            self.write_lines(text)
+        for lang, count in sorted(lang_counts.items(), key=lambda x: x[1]):
+            print(lang, count)
+
+    def get_sheet_text(self, sheet):
+        text = sheet.get('title', '') + '\n'
+        for source in sheet['sources']:
+            if "outsideBiText" in source:
+                text += source['outsideBiText'].get(self.lang, '')
+            elif "outsideText" in source:
+                text += source['outsideText']
+            elif "comment" in source:
+                text += source['comment']
+            text += '\n'
+        text = self.normalizer.normalize(text, lang=self.lang)
+        return text
+
+def export_library_as_file(lang, output_stem, max_line_len=None, format='both', overlap=0, webpages_dir=None, with_source_sheets=False):
     output_text = open(f"{output_stem}.txt", "w")
     output_jsonl = open(f"{output_stem}.jsonl", "w")
 
-    walker = TextWalker(output_text, output_jsonl, lang, max_line_len=max_line_len, format=format, overlap=overlap)
-    for v in tqdm(vs, total=count):
-        if v.versionTitle[-5:-3] == ' [':
-            continue
-        try:
-            v.walk_thru_contents(walker.action)
-        except InputError:
-            continue
-    if webpages_text is not None:
-        with open(webpages_text, 'r') as fin:
-            for line in fin:
-                walker.write_lines(line)
+    walker = TextWalker(output_text, output_jsonl, lang, max_line_len=max_line_len, format=format, overlap=overlap, webpages_dir=webpages_dir)
+    walker.walk_all_versions()
+    if webpages_dir is not None:
+        walker.walk_all_webpages()
+    if with_source_sheets:
+        walker.walk_all_sheets()
 
     output_text.close()
     output_jsonl.close()
@@ -187,11 +235,12 @@ def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('lang')
     parser.add_argument('-f', '--format', dest='format', help='"both", "jsonl" or "txt"')
-    parser.add_argument('-w', '--webpages-data', dest='webpages_data')
+    parser.add_argument('-w', '--webpages-dir', dest='webpages_dir')
+    parser.add_argument('-s', '--with-sheets', dest='with_sheets', action='store_true')
     parser.add_argument('-o', '--output', dest='output')
     return parser.parse_args()
 
 if __name__ == '__main__':
     args = get_args()
-    export_library_as_file(args.lang, args.output, max_line_len=512, overlap=50, webpages_text=args.webpages_data, format=args.format)
+    export_library_as_file(args.lang, args.output, max_line_len=512, overlap=50, webpages_dir=args.webpages_dir, format=args.format, with_source_sheets=args.with_sheets)
 
