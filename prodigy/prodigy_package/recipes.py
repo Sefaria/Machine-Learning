@@ -31,6 +31,8 @@ def load_model(model_dir, labels, lang):
     except OSError:
         model_exists = False
         nlp = Hebrew() if lang == 'he' else English()
+    if "sentencizer" not in nlp.pipe_names:
+        nlp.add_pipe("sentencizer", first=True)
     if "ner" not in nlp.pipe_names:
         nlp.add_pipe("ner", last=True)
     ner = nlp.get_pipe("ner")
@@ -115,7 +117,7 @@ def ref_tagging_recipe(dataset, input_collection, output_collection, model_dir, 
         train_model(nlp, temp_stream, model_dir)
     all_data = list(getattr(my_db.db, input_collection).find({}, {"_id": 0}))  # TODO loading all data into ram to avoid issues of cursor timing out
     stream = filter_existing_refs(all_data, my_db)
-    stream = split_sentences(nlp, all_data, min_length=200)
+    stream = split_sentences(nlp, stream, min_length=200)
     stream = add_model_predictions(nlp, stream, min_found=1)  # uncomment to add model predictions instead of pretagged spans
     stream = add_tokens(nlp, stream, skip=True)
     if view_id == "ner":
