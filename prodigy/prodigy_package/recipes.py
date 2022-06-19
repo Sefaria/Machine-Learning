@@ -85,6 +85,20 @@ def filter_existing_refs(in_data, my_db:MongoProdigyDBManager):
         if in_doc['meta']['Ref'] in out_refs: continue
         yield in_doc
 
+def split_sentences_nltk(stream):
+    """
+    NLTK seems to have a better sentencizer than spacy
+    """
+    from nltk.tokenize import sent_tokenize
+
+    for example in stream:
+        sentences = sent_tokenize(example['text'])
+        for sent in sentences:
+            assert isinstance(example, dict)
+            sent_example = example.copy()
+            sent_example['text'] = sent
+            yield sent_example
+
 def train_on_current_output(output_collection='examples2_output'):
     model_dir = '/prodigy-disk/ref_tagging_model_output'
     nlp, model_exists = load_model(model_dir)
@@ -117,7 +131,7 @@ def ref_tagging_recipe(dataset, input_collection, output_collection, model_dir, 
         train_model(nlp, temp_stream, model_dir)
     all_data = list(getattr(my_db.db, input_collection).find({}, {"_id": 0}))  # TODO loading all data into ram to avoid issues of cursor timing out
     stream = filter_existing_refs(all_data, my_db)
-    stream = split_sentences(nlp, stream, min_length=200)
+    stream = split_sentences_nltk(stream)
     stream = add_model_predictions(nlp, stream, min_found=1)  # uncomment to add model predictions instead of pretagged spans
     stream = add_tokens(nlp, stream, skip=True)
     if view_id == "ner":

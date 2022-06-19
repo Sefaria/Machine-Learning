@@ -1,4 +1,5 @@
 srsly
 spacy
 pymongo
+nltk
 scikit-learn
