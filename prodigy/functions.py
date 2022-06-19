@@ -9,7 +9,6 @@ from sklearn.model_selection import train_test_split
 from spacy.training import Example
 from spacy.language import Language
 from db_manager import MongoProdigyDBManager
-from util.spacy_registry import inner_punct_tokenizer_factory
 
 @spacy.registry.readers("mongo_reader")
 def stream_data(db_host: str, db_port: int, input_collection: str, output_collection: str, random_state: int, train_perc: float, corpus_type: str, min_len: int, unique_by_metadata=True) -> Callable[[Language], Iterator[Example]]:
