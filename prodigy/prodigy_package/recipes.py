@@ -4,7 +4,7 @@ from spacy.lang.en import English
 from spacy.lang.he import Hebrew
 from spacy.util import minibatch, compounding
 from prodigy.components.sorters import prefer_uncertain
-from prodigy.components.preprocess import add_tokens, split_spans
+from prodigy.components.preprocess import add_tokens, split_spans, split_sentences
 
 from db_manager import MongoProdigyDBManager
 
@@ -115,7 +115,7 @@ def ref_tagging_recipe(dataset, input_collection, output_collection, model_dir, 
         train_model(nlp, temp_stream, model_dir)
     all_data = list(getattr(my_db.db, input_collection).find({}, {"_id": 0}))  # TODO loading all data into ram to avoid issues of cursor timing out
     stream = filter_existing_refs(all_data, my_db)
-    # stream = split_sentences(nlp, all_data, min_length=200)
+    stream = split_sentences(nlp, all_data, min_length=200)
     stream = add_model_predictions(nlp, stream, min_found=1)  # uncomment to add model predictions instead of pretagged spans
     stream = add_tokens(nlp, stream, skip=True)
     if view_id == "ner":
