@@ -3,15 +3,16 @@ description: "All preprocessing and training for linker models"
 spacy_version: ">=3.2.0,<4.0.0"
 # Variables can be referenced across the project.yml using ${vars.var_name}
 vars:
-  name: "webpages"
-  lang: "he"
+  name: "ner"
+  lang: "en"
   # ref_training_collections: "achronim_output webpages_output rishonim_output_silver gilyon_output"
-  ref_training_collections: "webpages_output achronim_output gilyon_output:100"
+  # ref_training_collections: "webpages_output achronim_output gilyon_output:100"
+  ref_training_collections: "talmud_ner"
   subref_training_collections: "webpages_sub_citation_output gilyon_sub_citation_output"
   annotator_pod: "annotator-bodum-0"
   webpages_dir: "../web_scraper/output"
   embedding_size: 50
-  pretrain_model_name: "model7.bin"
+  pretrain_model_name: "model8.bin"
   # number of processes (tokenization) and threads (fasttext)
   n_process: 8
 
@@ -106,7 +107,7 @@ commands:
   - name: "train-ref-model"
     script:
       - "python ../util/merge_collections.py -o merged_output -c ${vars.ref_training_collections}"
-      - "python -m spacy train configs/ref-v3.2.cfg --output models/${vars.name}_${vars.lang}_achronim --paths.vectors vectors/all_text_${vars.lang}_fasttext_model_${vars.embedding_size} --paths.input_collection merged_output --nlp.lang ${vars.lang} --paths.init_tok2vec models/pretrain_ref_${vars.lang}_${vars.embedding_size}/${vars.pretrain_model_name} --pretraining.objective.hidden_size ${vars.embedding_size} --code ../util/spacy_registry.py --gpu-id 0"
+      - "python -m spacy train configs/ref-v3.2.cfg --output models/${vars.name}_${vars.lang} --paths.vectors vectors/all_text_${vars.lang}_fasttext_model_${vars.embedding_size} --paths.input_collection merged_output --nlp.lang ${vars.lang} --paths.init_tok2vec models/pretrain_ref_${vars.lang}_${vars.embedding_size}/${vars.pretrain_model_name} --pretraining.objective.hidden_size ${vars.embedding_size} --code ../util/spacy_registry.py --gpu-id 0"
     deps:
       - "configs/ref-v3.2.cfg"
       - "models/pretrain_ref_${vars.lang}_${vars.embedding_size}"
@@ -146,10 +147,10 @@ commands:
       - "kubectl exec -it ${vars.annotator_pod} -- rm -rf models /prodigy-disk/${vars.name}_${vars.lang}.tar"
       - "rm -rf models/${vars.name}_${vars.lang}.tar"
       # subref model
-      - "tar cf models/${vars.name}_subref_${vars.lang}.tar models/${vars.name}_subref_${vars.lang}/model-best"
-      - "krsync.sh -av --progress --stats models/${vars.name}_subref_${vars.lang}.tar ${vars.annotator_pod}:/prodigy-disk/${vars.name}_subref_${vars.lang}.tar"
-      - "kubectl exec -it ${vars.annotator_pod} -- tar xf /prodigy-disk/${vars.name}_subref_${vars.lang}.tar"
-      - "kubectl exec -it ${vars.annotator_pod} -- rm -rf /prodigy-disk/${vars.name}_subref_${vars.lang}"
-      - "kubectl exec -it ${vars.annotator_pod} -- mv models/${vars.name}_subref_${vars.lang}/model-best /prodigy-disk/${vars.name}_subref_${vars.lang}"
-      - "kubectl exec -it ${vars.annotator_pod} -- rm -rf models /prodigy-disk/${vars.name}_subref_${vars.lang}.tar"
-      - "rm -rf models/${vars.name}_subref_${vars.lang}.tar"
+#      - "tar cf models/${vars.name}_subref_${vars.lang}.tar models/${vars.name}_subref_${vars.lang}/model-best"
+#      - "krsync.sh -av --progress --stats models/${vars.name}_subref_${vars.lang}.tar ${vars.annotator_pod}:/prodigy-disk/${vars.name}_subref_${vars.lang}.tar"
+#      - "kubectl exec -it ${vars.annotator_pod} -- tar xf /prodigy-disk/${vars.name}_subref_${vars.lang}.tar"
+#      - "kubectl exec -it ${vars.annotator_pod} -- rm -rf /prodigy-disk/${vars.name}_subref_${vars.lang}"
+#      - "kubectl exec -it ${vars.annotator_pod} -- mv models/${vars.name}_subref_${vars.lang}/model-best /prodigy-disk/${vars.name}_subref_${vars.lang}"
+#      - "kubectl exec -it ${vars.annotator_pod} -- rm -rf models /prodigy-disk/${vars.name}_subref_${vars.lang}.tar"
+#      - "rm -rf models/${vars.name}_subref_${vars.lang}.tar"

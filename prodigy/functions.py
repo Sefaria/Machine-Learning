@@ -4,10 +4,8 @@ Functions for analyzing models
 
 from typing import Callable, Iterator, List
 from spacy.util import ensure_path
-import spacy, re, srsly, json, csv, django
-django.setup()
+import spacy, re, srsly, json, csv
 from functools import reduce
-from sefaria.model import *
 from tqdm import tqdm
 from spacy.lang.he import Hebrew
 from sklearn.model_selection import train_test_split
@@ -82,6 +80,8 @@ def make_evaluation_files(evaluation_data, ner_model, output_folder, start=0, la
 
         # breakdown by gen
         for metric, temp in zip(('tp', 'fp', 'fn', 'tn'), (temp_tp, temp_fp, temp_fn, temp_tn)):
+            # TODO relies on Sefaria-Project but prodigy server doesn't have access to that code
+            # TODO consider moving evaluation code to another file
             eval_by_gen[id_to_gen(example.predicted.user_data['Ref'])][metric] += len(temp)
         if only_errors and (len(temp_fn) + len(temp_fp)) == 0:
             continue
@@ -253,9 +253,10 @@ def convert_jsonl_to_csv(filename):
 if __name__ == "__main__":
     # nlp = spacy.load('./output/yerushalmi_refs/model-last')
     # nlp = spacy.load('./output/webpages/model-last')
-    nlp = spacy.load('/home/nss/sefaria/ML/linker/models/webpages_he_achronim/model-last')
+    # nlp = spacy.load('/home/nss/sefaria/ML/linker/models/webpages_he_achronim/model-last')
+    nlp = spacy.load('/home/nss/sefaria/ML/linker/models/ner_en/model-last')
     data = stream_data('localhost', 27017, 'merged_output', 'gilyon_input', 61, 0.8, 'test', 20)(nlp)
-    print(make_evaluation_files(data, nlp, './temp', lang='he', only_errors=True))
+    print(make_evaluation_files(data, nlp, './temp', lang='en', only_errors=True))
 
     # data = stream_data('localhost', 27017, 'yerushalmi_output', 'gilyon_input', -1, 1.0, 'train', 0, unique_by_metadata=True)(nlp)
     # export_tagged_data_as_html(data, './output/evaluation_results', is_binary=False, start=0, lang='en')  # 897
