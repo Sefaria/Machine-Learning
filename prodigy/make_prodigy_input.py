@@ -92,6 +92,19 @@ class ProdigyInputWalker:
         random.shuffle(self.prodigyInput)
 
 
+def make_random_prodigy_input(lang, prev_tagged_refs, collection, with_links=False, sample_size=100):
+    walker = ProdigyInputWalker(prev_tagged_refs, with_links)
+    versions = VersionSet({"language": lang}).array()
+    for version in tqdm(versions):
+        if re.search(r'\[[a-zA-Z]+]$', version.versionTitle): continue
+        try:
+            version.walk_thru_contents(walker.action)
+        except InputError:
+            continue
+    walker.make_final_input(sample_size)
+    import_data_to_collection(walker.prodigyInput, collection)
+
+
 def make_prodigy_input(title_list, vtitle_list, lang_list, prev_tagged_refs, collection, with_links=False):
     walker = ProdigyInputWalker(prev_tagged_refs, with_links)
     for title, vtitle, lang in tqdm(zip(title_list, vtitle_list, lang_list), total=len(title_list)):
@@ -224,10 +237,11 @@ if __name__ == "__main__":
         "Ein HaTekhelet", "Shev Shmat'ta", "Havot Yair", "Responsa Chatam Sofer", "Netivot Olam", "Mei HaShiloach",
         "Pri Tzadik", "Sefer HeArukh", "Gilyon HaShas on Berakhot", "Chakham Tzvi", "Sheilat Yaavetz", "B'Mareh HaBazak Volume VII"
     ]
-    prev_tagged_refs = get_prev_tagged_refs('webpages_output')
+    prev_tagged_refs = set()  # get_prev_tagged_refs('webpages_output')
     # title_list = [i.title for i in IndexSet({"title": re.compile(r'Gilyon HaShas on')})]
     # print(title_list)
-    make_prodigy_input(title_list, [None]*len(title_list), ['he']*len(title_list), prev_tagged_refs, 'achronim_input')
+    make_random_prodigy_input('en', prev_tagged_refs, 'ner_en_input')
+    # make_prodigy_input(title_list, [None]*len(title_list), ['en']*len(title_list), prev_tagged_refs, 'ner_en_input')
     #make_prodigy_input_webpages(3000, prev_tagged_refs)
     # combine_all_sentences_to_paragraphs()
     # make_prodigy_input_sub_citation('webpages_output', 'webpages_sub_citation_input2')
