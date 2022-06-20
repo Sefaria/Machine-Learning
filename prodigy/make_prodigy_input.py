@@ -15,7 +15,7 @@ class ProdigyInputWalker:
         self.prodigyInputByVersion = defaultdict(list)
         self.with_links = with_links
         self.prev_tagged_refs = prev_tagged_refs or []
-        self.normalizer = NormalizerComposer(['unidecode', 'html', 'maqaf', 'cantillation', 'double-space'])
+        self.normalizer = NormalizerComposer(['unidecode', 'br-tag', 'itag' ,'html', 'maqaf', 'cantillation', 'double-space'])
 
     @staticmethod
     def get_refs_with_location(text, lang, citing_only=True):
@@ -54,9 +54,22 @@ class ProdigyInputWalker:
     def split_text(self, text):
         return text.split('. ')
 
+    def get_itag_texts(self, text):
+        from sefaria.helper.normalization import ITagNormalizer
+
+        itags, _ = ITagNormalizer._get_all_itags(text)
+        itag_texts = [itag.decode() for itag in itags]
+        return [itag_text for itag_text in itag_texts if len(itag_text) > 20]
+
     def get_input(self, text, en_tref, language):
-        text = self.normalizer.normalize(text)
-        text_list = text.split('\n')
+        itag_texts = self.get_itag_texts(text)
+        try:
+            text = self.normalizer.normalize(text)
+            text_list = text.split('\n')
+        except Exception as e:
+            print(e)
+            text_list = []
+        text_list += [self.normalizer.normalize(itag_text).strip() for itag_text in itag_texts]
         temp_input_list = []
         for t in text_list:
             if len(t) <= 20: continue
@@ -81,18 +94,20 @@ class ProdigyInputWalker:
         temp_input_list = self.get_input(text, en_tref, version.language)
         self.prodigyInputByVersion[(version.versionTitle, version.title, version.language)] += temp_input_list
         
-    def make_final_input(self, sample_size):
+    def make_final_input(self, sample_size, max_length=None):
         import statistics
         lens = []
         for temp_input_list in self.prodigyInputByVersion.values():
             lens += [len(t['text']) for t in temp_input_list]
+            if max_length is not None:
+                temp_input_list = [t for t in temp_input_list if len(t['text']) < max_length]
             self.prodigyInput += random.sample(temp_input_list, min(len(temp_input_list), sample_size))
         print(statistics.mean(lens))
         print(statistics.stdev(lens))
         random.shuffle(self.prodigyInput)
 
 
-def make_random_prodigy_input(lang, prev_tagged_refs, collection, with_links=False, sample_size=100):
+def make_random_prodigy_input(lang, prev_tagged_refs, collection, with_links=False, sample_size=100, max_length=None):
     walker = ProdigyInputWalker(prev_tagged_refs, with_links)
     versions = VersionSet({"language": lang}).array()
     for version in tqdm(versions):
@@ -101,7 +116,7 @@ def make_random_prodigy_input(lang, prev_tagged_refs, collection, with_links=Fal
             version.walk_thru_contents(walker.action)
         except InputError:
             continue
-    walker.make_final_input(sample_size)
+    walker.make_final_input(sample_size, max_length=max_length)
     import_data_to_collection(walker.prodigyInput, collection)
 
 
@@ -240,7 +255,7 @@ if __name__ == "__main__":
     prev_tagged_refs = set()  # get_prev_tagged_refs('webpages_output')
     # title_list = [i.title for i in IndexSet({"title": re.compile(r'Gilyon HaShas on')})]
     # print(title_list)
-    make_random_prodigy_input('en', prev_tagged_refs, 'ner_en_input')
+    make_random_prodigy_input('en', prev_tagged_refs, 'ner_en_input', max_length=1500)
     # make_prodigy_input(title_list, [None]*len(title_list), ['en']*len(title_list), prev_tagged_refs, 'ner_en_input')
     #make_prodigy_input_webpages(3000, prev_tagged_refs)
     # combine_all_sentences_to_paragraphs()
