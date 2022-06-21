@@ -114,8 +114,9 @@ def train_on_current_output(output_collection='examples2_output'):
     losses = train_model(nlp, prev_annotations, model_dir)
     print(losses.get('ner', None))
 
+
 @prodigy.recipe(
-    "ref-tagging-recipe",
+    "ner-recipe",
     dataset=("Dataset to save answers to", "positional", None, str),
     input_collection=("Mongo collection to input data from", "positional", None, str),
     output_collection=("Mongo collection to output data to", "positional", None, str),
