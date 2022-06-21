@@ -127,19 +127,22 @@ def train_on_current_output(output_collection='examples2_output'):
     dir=("Direction of text to display. Either 'ltr' or 'rtl'", "option", None, str),
     lang=("Lang of training data. Either 'en' or 'he'", "option", None, str),
     train_on_input=("Should empty model be trained on input spans?", "option", None, int),
+    should_add_predictions=("When there is an existing model, should you use it to add predictions to input", "option", None, int),
 )
-def ref_tagging_recipe(dataset, input_collection, output_collection, model_dir, labels, view_id="text", db_host="localhost", db_port=27017, dir='rtl', lang='he',train_on_input=1):
+def ref_tagging_recipe(dataset, input_collection, output_collection, model_dir, labels, view_id="text", db_host="localhost", db_port=27017, dir='rtl', lang='he',train_on_input=1, should_add_predictions=1):
     my_db = MongoProdigyDBManager(output_collection, db_host, db_port)
     labels = labels.split(',')
     nlp, model_exists = load_model(model_dir, labels, lang)
     if not model_exists and train_on_input == 1:
+        print("Training on input to initialize model")
         temp_stream = getattr(my_db.db, input_collection).find({}, {"_id": 0})
         train_model(nlp, temp_stream, model_dir)
     all_data = list(getattr(my_db.db, input_collection).find({}, {"_id": 0}))  # TODO loading all data into ram to avoid issues of cursor timing out
     stream = filter_existing_refs(all_data, my_db)
     # stream = split_sentences_nltk(stream)
     stream = filter_long_texts(stream, max_length=2000)
-    stream = add_model_predictions(nlp, stream, min_found=1)  # uncomment to add model predictions instead of pretagged spans
+    if model_exists and should_add_predictions == 1:
+        stream = add_model_predictions(nlp, stream, min_found=1)
     stream = add_tokens(nlp, stream, skip=True)
     if view_id == "ner":
         stream = split_spans(stream)
