@@ -84,7 +84,7 @@ def score_stream(nlp, stream):
 def filter_existing_refs(in_data, my_db:MongoProdigyDBManager):
     out_refs = set(my_db.output_collection.find({}).distinct('meta.Ref'))
     for in_doc in in_data:
-        if in_doc['meta']['Ref'] in out_refs: continue
+        if in_doc['meta'].get('Ref', None) in out_refs: continue
         yield in_doc
 
 def filter_long_texts(stream, max_length):
