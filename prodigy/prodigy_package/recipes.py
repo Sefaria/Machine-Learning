@@ -83,7 +83,7 @@ def score_stream(nlp, stream):
 
 def filter_existing_in_output(in_data, my_db:MongoProdigyDBManager):
     def get_key(doc):
-        return sorted(doc['meta'].items(), key=lambda x: x[0])
+        return tuple(sorted(doc['meta'].items(), key=lambda x: x[0]))
     existing_keys = set()
     for doc in my_db.output_collection.find({}):
         existing_keys.add(get_key(doc))
