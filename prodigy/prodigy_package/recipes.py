@@ -81,10 +81,15 @@ def score_stream(nlp, stream):
         score = ner.predict(docs)
         yield (score[0], example)
 
-def filter_existing_refs(in_data, my_db:MongoProdigyDBManager):
-    out_refs = set(my_db.output_collection.find({}).distinct('meta.Ref'))
+def filter_existing_in_output(in_data, my_db:MongoProdigyDBManager):
+    def get_key(doc):
+        return sorted(doc['meta'].items(), key=lambda x: x[0])
+    existing_keys = set()
+    for doc in my_db.output_collection.find({}):
+        existing_keys.add(get_key(doc))
     for in_doc in in_data:
-        if in_doc['meta'].get('Ref', None) in out_refs: continue
+        in_doc_key = get_key(in_doc)
+        if in_doc_key in existing_keys: continue
         yield in_doc
 
 def filter_long_texts(stream, max_length):
@@ -141,7 +146,7 @@ def ref_tagging_recipe(dataset, input_collection, output_collection, labels, mod
         temp_stream = getattr(my_db.db, input_collection).find({}, {"_id": 0})
         train_model(nlp, temp_stream, model_dir)
     all_data = list(getattr(my_db.db, input_collection).find({}, {"_id": 0}))  # TODO loading all data into ram to avoid issues of cursor timing out
-    stream = filter_existing_refs(all_data, my_db)
+    stream = filter_existing_in_output(all_data, my_db)
     # stream = split_sentences_nltk(stream)
     stream = filter_long_texts(stream, max_length=2000)
     if model_exists and should_add_predictions == 1:
