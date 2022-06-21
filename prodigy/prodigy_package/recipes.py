@@ -120,8 +120,8 @@ def train_on_current_output(output_collection='examples2_output'):
     dataset=("Dataset to save answers to", "positional", None, str),
     input_collection=("Mongo collection to input data from", "positional", None, str),
     output_collection=("Mongo collection to output data to", "positional", None, str),
-    model_dir=("Spacy model location", "positional", None, str),
     labels=("Labels for classification", "positional", None, str),
+    model_dir=("Spacy model location", "positional", None, str),
     view_id=("Annotation interface", "option", "v", str),
     db_host=("Mongo host", "option", None, str),
     db_port=("Mongo port", "option", None, int),
@@ -130,7 +130,7 @@ def train_on_current_output(output_collection='examples2_output'):
     train_on_input=("Should empty model be trained on input spans?", "option", None, int),
     should_add_predictions=("When there is an existing model, should you use it to add predictions to input", "option", None, int),
 )
-def ref_tagging_recipe(dataset, input_collection, output_collection, model_dir, labels, view_id="text", db_host="localhost", db_port=27017, dir='rtl', lang='he',train_on_input=1, should_add_predictions=1):
+def ref_tagging_recipe(dataset, input_collection, output_collection, , labels, model_dir=None, view_id="text", db_host="localhost", db_port=27017, dir='rtl', lang='he',train_on_input=1, should_add_predictions=1):
     my_db = MongoProdigyDBManager(output_collection, db_host, db_port)
     labels = labels.split(',')
     nlp, model_exists = load_model(model_dir, labels, lang)
