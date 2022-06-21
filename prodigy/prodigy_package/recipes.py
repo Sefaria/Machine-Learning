@@ -25,8 +25,10 @@ def inner_punct_tokenizer_factory():
     return inner_punct_tokenizer
 
 def load_model(model_dir, labels, lang):
-    model_exists = True
+    model_exists = model_dir is not None
     try:
+        if model_dir is None:
+            raise OSError("model_dir is None")
         nlp = spacy.load(model_dir)
     except OSError:
         model_exists = False
@@ -134,7 +136,7 @@ def ref_tagging_recipe(dataset, input_collection, output_collection, labels, mod
     my_db = MongoProdigyDBManager(output_collection, db_host, db_port)
     labels = labels.split(',')
     nlp, model_exists = load_model(model_dir, labels, lang)
-    if not model_exists and train_on_input == 1:
+    if not model_exists and train_on_input == 1 and model_dir is not None:
         print("Training on input to initialize model")
         temp_stream = getattr(my_db.db, input_collection).find({}, {"_id": 0})
         train_model(nlp, temp_stream, model_dir)
