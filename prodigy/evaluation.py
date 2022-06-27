@@ -55,8 +55,6 @@ def make_evaluation_files(evaluation_data, ner_model, output_folder, start=0, la
 
         # breakdown by gen
         for metric, temp in zip(('tp', 'fp', 'fn', 'tn'), (temp_tp, temp_fp, temp_fn, temp_tn)):
-            # TODO relies on Sefaria-Project but prodigy server doesn't have access to that code
-            # TODO consider moving evaluation code to another file
             eval_by_gen[id_to_gen(example.predicted.user_data['Ref'])][metric] += len(temp)
         if only_errors and (len(temp_fn) + len(temp_fp)) == 0:
             continue
@@ -269,7 +267,7 @@ if __name__ == "__main__":
     # data = stream_data('localhost', 27017, 'merged_output', 'gilyon_input', 61, 0.8, 'test', 20)(nlp)
     # print(make_evaluation_files(data, nlp, './temp', lang='en', only_errors=True))
 
-    data = stream_data('localhost', 27017, 'ner_en_output', 'gilyon_input', -1, 1.0, 'train', 20, unique_by_metadata=True)(nlp)
+    data = stream_data('localhost', 27017, 'bdb_breaks', 'gilyon_input', -1, 1.0, 'train', 20, unique_by_metadata=True)(nlp)
     export_tagged_data_as_html(data, './output/evaluation_results', is_binary=False, start=0, lang='en')
     # convert_jsonl_to_json('./output/evaluation_results/doc_evaluation.jsonl')
     # convert_jsonl_to_csv('./output/evaluation_results/doc_evaluation.jsonl')
