@@ -8,6 +8,7 @@ django.setup()
 from sefaria.model import *
 from functools import reduce
 from tqdm import tqdm
+from spacy.lang.en import English
 from prodigy.functions import stream_data
 from util.spacy_registry import inner_punct_tokenizer_factory
 
@@ -124,6 +125,7 @@ def export_tagged_data_as_html(tagged_data, output_folder, is_binary=True, start
             out_item['tp'] = [[span.start_char, span.end_char, span.label_] for span in ents_x2y]
         output_json += [out_item]
     make_evaluation_html(output_json, output_folder, 'doc_export.html', lang)
+    make_evaluation_csv(output_json, output_folder, 'doc_export.csv')
 
 
 def wrap_chars_with_overlaps(s, chars_to_wrap, get_wrapped_text, return_chars_to_wrap=False):
@@ -143,6 +145,28 @@ def wrap_chars_with_overlaps(s, chars_to_wrap, get_wrapped_text, return_chars_to
     if return_chars_to_wrap:
         return s, chars_to_wrap
     return s
+
+
+def make_evaluation_csv(data, output_folder, output_filename):
+    rows = []
+    for i, d in enumerate(data):
+        named_entities = reduce(lambda a, b: a + [(ne + [b]) for ne in d[b]], ('tp', 'fp', 'fn'), [])
+        named_entities.sort(key=lambda x: x[0])
+        for j, (start, end, label, truthiness) in enumerate(named_entities):
+            prev_end = 0 if j == 0 else named_entities[j-1][1]
+            next_start = None if (j == len(named_entities) - 1) else named_entities[j+1][0]
+            rows += [{
+                "Ref": d['ref'],
+                'Named Entity': d['text'][start:end],
+                'Label': label,
+                'Status': truthiness,
+                'Text Before': d['text'][prev_end:start],
+                'Text After': d['text'][end:next_start],
+            }]
+    with open(f"{output_folder}/{output_filename}", "w") as fout:
+        cout = csv.DictWriter(fout, ['Ref', 'Text Before', 'Named Entity', 'Text After', 'Label', 'Status'])
+        cout.writeheader()
+        cout.writerows(rows)
 
 
 def make_evaluation_html(data, output_folder, output_filename, lang='he'):
@@ -239,12 +263,14 @@ if __name__ == "__main__":
     # nlp = spacy.load('./output/yerushalmi_refs/model-last')
     # nlp = spacy.load('./output/webpages/model-last')
     # nlp = spacy.load('/home/nss/sefaria/ML/linker/models/webpages_he_achronim/model-last')
-    nlp = spacy.load('/home/nss/sefaria/ML/linker/models/ner_en/model-last')
-    data = stream_data('localhost', 27017, 'merged_output', 'gilyon_input', 61, 0.8, 'test', 20)(nlp)
-    print(make_evaluation_files(data, nlp, './temp', lang='en', only_errors=True))
+    # nlp = spacy.load('/home/nss/sefaria/ML/linker/models/ner_en/model-last')
+    nlp = English()
+    nlp.tokenizer = inner_punct_tokenizer_factory()(nlp)
+    # data = stream_data('localhost', 27017, 'merged_output', 'gilyon_input', 61, 0.8, 'test', 20)(nlp)
+    # print(make_evaluation_files(data, nlp, './temp', lang='en', only_errors=True))
 
-    # data = stream_data('localhost', 27017, 'yerushalmi_output', 'gilyon_input', -1, 1.0, 'train', 0, unique_by_metadata=True)(nlp)
-    # export_tagged_data_as_html(data, './output/evaluation_results', is_binary=False, start=0, lang='en')  # 897
+    data = stream_data('localhost', 27017, 'ner_en_output', 'gilyon_input', -1, 1.0, 'train', 20, unique_by_metadata=True)(nlp)
+    export_tagged_data_as_html(data, './output/evaluation_results', is_binary=False, start=0, lang='en')
     # convert_jsonl_to_json('./output/evaluation_results/doc_evaluation.jsonl')
     # convert_jsonl_to_csv('./output/evaluation_results/doc_evaluation.jsonl')
     # spacy.training.offsets_to_biluo_tags(doc, entities)
