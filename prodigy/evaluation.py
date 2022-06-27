@@ -13,6 +13,8 @@ from prodigy.functions import stream_data
 from util.spacy_registry import inner_punct_tokenizer_factory
 
 def id_to_gen(_id):
+    if _id is None:
+        return 'N/A'
     if _id.startswith('http'):
         return 'web'
     else:
@@ -55,7 +57,7 @@ def make_evaluation_files(evaluation_data, ner_model, output_folder, start=0, la
 
         # breakdown by gen
         for metric, temp in zip(('tp', 'fp', 'fn', 'tn'), (temp_tp, temp_fp, temp_fn, temp_tn)):
-            eval_by_gen[id_to_gen(example.predicted.user_data['Ref'])][metric] += len(temp)
+            eval_by_gen[id_to_gen(example.predicted.user_data.get('Ref', None))][metric] += len(temp)
         if only_errors and (len(temp_fn) + len(temp_fp)) == 0:
             continue
         output_json += [{
