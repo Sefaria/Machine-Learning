@@ -23,8 +23,10 @@ def stream_data(db_host: str, db_port: int, input_collection: str, output_collec
     else:
         train_data, test_data = train_test_split(data, random_state=random_state, train_size=train_perc)
     corpus_data = train_data if corpus_type == "train" else test_data
+
     def generate_stream(nlp):
         for raw_example in corpus_data:
+            if raw_example['answer'] == 'reject': continue
             doc = nlp.make_doc(raw_example['text'])
             doc.user_data = raw_example['meta']
             doc.user_data.update({'answer': raw_example['answer'], '_id': str(raw_example['_id'])})
