@@ -42,8 +42,8 @@ spec:
           # args: ["prodigy ner-recipe ref_tagging input silver_output_full מקור -model-dir /prodigy-disk/model-last --view-id ner_manual -db-host $MONGO_HOST -db-port 27017 -F ./functions.py"]
           # args: ["prodigy ner-recipe jeru_ref_tagging yerushalmi_input yerushalmi_output source -model-dir /prodigy-disk/jeru_ref_tagging --view-id ner_manual -db-host $MONGO_HOST -db-port 27017 -dir ltr -F ./functions.py"]
           # args: [ "prodigy ner-recipe achronim achronim_input achronim_output מקור -model-dir /prodigy-disk/webpages_he --view-id ner_manual -db-host $MONGO_HOST -db-port 27017 -dir rtl -F ./functions.py" ]
-          # args: [ "prodigy ner-recipe ner ner_en_input3 ner_en_output3 Person,Citation,Group-of-People,Place,Term,Time,Name-of-God -model-dir /prodigy-disk/ner_en --view-id ner_manual -db-host $MONGO_HOST -db-port 27017 -dir ltr -should-add-predictions 1 -F ./functions.py" ]
-          args: [ "prodigy ner-recipe ner ner_he_input ner_he_output בן-אדם,מקור,קבוצת-אנשים,מקום,מונח,זמן,שם-אלקים -model-dir /prodigy-disk/ner_he --view-id ner_manual -db-host $MONGO_HOST -db-port 27017 -dir rtl -should-add-predictions 0 -train-on-input 0 -F ./functions.py" ]
+          args: [ "prodigy ner-recipe ner ner_en_input3 ner_en_output3 Person,Citation,Group-of-People,Place,Term,Time,Name-of-God -model-dir /prodigy-disk/ner_en --view-id ner_manual -db-host $MONGO_HOST -db-port 27017 -dir ltr -should-add-predictions 1 -F ./functions.py" ]
+          # args: [ "prodigy ner-recipe ner ner_he_input ner_he_output בן-אדם,מקור,קבוצת-אנשים,מקום,מונח,זמן,שם-אלקים -model-dir /prodigy-disk/ner_he --view-id ner_manual -db-host $MONGO_HOST -db-port 27017 -dir rtl -should-add-predictions 0 -train-on-input 0 -F ./functions.py" ]
           # args: ["prodigy ner-recipe webpages_sub_citation webpages_sub_citation_input2 webpages_sub_citation_output /prodigy-disk/webpages_subref_he כותרת,דה,מספר,שם,לקמן-להלן,סימן-טווח,שם-עצמי,לא-רציף --view-id ner_manual -db-host $MONGO_HOST -db-port 27017 -train-on-input 0 -dir rtl -F ./functions.py"]
           ports:
             - containerPort: 8080
