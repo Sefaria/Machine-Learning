@@ -37,26 +37,18 @@ spec:
       terminationGracePeriodSeconds: 60
       affinity:
         nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - preference:
-                matchExpressions:
-                  - key: preemptible
-                    operator: In
-                    values:
-                      - "false"
-                      - ""
-                  - key: durable
-                    operator: In
-                    values:
-                      - "true"
-              weight: 100
-            - preference:
-                matchExpressions:
-                  - key: preemptible
-                    operator: NotIn
-                    values:
-                      - "true"
-              weight: 100
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: preemptible
+                operator: In
+                values:
+                  - "false"
+                  - ""
+              - key: durable
+                operator: In
+                values:
+                  - "true"
       containers:
         - name: prodigy
           image: "{{ .Values.prodigyAnnotator.imageName }}:{{ .Values.prodigyAnnotator.imageTag }}"
