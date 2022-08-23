@@ -5,12 +5,14 @@ Functions for analyzing models
 from typing import Callable, Iterator, List
 import spacy, re, srsly, json, csv, django
 django.setup()
+from pymongo import InsertOne
 from sefaria.model import *
 from functools import reduce
 from tqdm import tqdm
 from spacy.lang.en import English
-from prodigy.functions import stream_data
+from prodigy.functions import stream_data, get_corpus_data
 from util.spacy_registry import inner_punct_tokenizer_factory
+from db_manager import MongoProdigyDBManager
 
 def id_to_gen(_id):
     if _id is None:
@@ -20,8 +22,11 @@ def id_to_gen(_id):
     else:
         oref = Ref(_id)
         # return "|".join(oref.index.authors)
-        tp = oref.index.best_time_period()
-        if tp.start < 1500:
+        try:
+            tp = oref.index.best_time_period()
+        except:
+            tp = None
+        if tp is not None and isinstance(tp.start, int) and tp.start < 1500:
             return 'rishonim'
         else:
             return 'achronim'
@@ -65,7 +70,7 @@ def make_evaluation_files(evaluation_data, ner_model, output_folder, start=0, la
             "tp": [list(ent) for ent in temp_tp],
             "fp": [list(ent) for ent in temp_fp],
             "fn": [list(ent) for ent in temp_fn],
-            "ref": example.predicted.user_data['Ref'],
+            "ref": example.predicted.user_data.get('Ref', ''),
             "_id": example.predicted.user_data['_id'],
         }]
 
@@ -105,7 +110,7 @@ def export_tagged_data_as_html(tagged_data, output_folder, is_binary=True, start
             "tp": [],
             "fp": [],
             "fn": [],
-            "ref": example.predicted.user_data['Ref'],
+            "ref": example.predicted.user_data.get('Ref', ''),
             "_id": example.predicted.user_data['_id'],
         }
         if is_binary:
@@ -156,7 +161,7 @@ def make_evaluation_csv(data, output_folder, output_filename):
             prev_end = 0 if j == 0 else named_entities[j-1][1]
             next_start = None if (j == len(named_entities) - 1) else named_entities[j+1][0]
             rows += [{
-                "Ref": d['ref'],
+                "Ref": d.get('ref', ''),
                 'Named Entity': d['text'][start:end],
                 'Label': label,
                 'Status': truthiness,
@@ -263,14 +268,21 @@ if __name__ == "__main__":
     # nlp = spacy.load('./output/yerushalmi_refs/model-last')
     # nlp = spacy.load('./output/webpages/model-last')
     # nlp = spacy.load('/home/nss/sefaria/ML/linker/models/webpages_he_achronim/model-last')
-    # nlp = spacy.load('/home/nss/sefaria/ML/linker/models/ner_en/model-last')
-    nlp = English()
-    nlp.tokenizer = inner_punct_tokenizer_factory()(nlp)
-    # data = stream_data('localhost', 27017, 'merged_output', 'gilyon_input', 61, 0.8, 'test', 20)(nlp)
-    # print(make_evaluation_files(data, nlp, './temp', lang='en', only_errors=True))
+    nlp = spacy.load('/home/nss/sefaria/ML/linker/models/ner_he/model-last')
+    # nlp = English()
+    # nlp.tokenizer = inner_punct_tokenizer_factory()(nlp)
+    # data = stream_data('localhost', 27017, 'merged_output', 'gilyon_input', 61, 0.5, 'test', 20)(nlp)
+    # print(make_evaluation_files(data, nlp, './temp', lang='he', only_errors=False))
 
-    data = stream_data('localhost', 27017, 'bdb_breaks', 'gilyon_input', -1, 1.0, 'train', 20, unique_by_metadata=True)(nlp)
-    export_tagged_data_as_html(data, './output/evaluation_results', is_binary=False, start=0, lang='en')
+    #data = stream_data('localhost', 27017, 'ner_en_output2', 'gilyon_input', -1, 1.0, 'train', 20, unique_by_metadata=True)(nlp)
+    #export_tagged_data_as_html(data, './output/evaluation_results', is_binary=False, start=0, lang='en')
     # convert_jsonl_to_json('./output/evaluation_results/doc_evaluation.jsonl')
     # convert_jsonl_to_csv('./output/evaluation_results/doc_evaluation.jsonl')
     # spacy.training.offsets_to_biluo_tags(doc, entities)
+
+    ## Output test data to collection to refine in prodigy
+    data = get_corpus_data('localhost', 27017, 'merged_output', 'gilyon_input', 61, 0.5, 'test', 20)
+    dbm = MongoProdigyDBManager("test_data_to_refine")
+    dbm.output_collection.delete_many({})
+    dbm.output_collection.bulk_write([InsertOne(x) for x in data])
+

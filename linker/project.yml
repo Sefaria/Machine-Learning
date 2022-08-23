@@ -4,10 +4,10 @@ spacy_version: ">=3.2.0,<4.0.0"
 # Variables can be referenced across the project.yml using ${vars.var_name}
 vars:
   name: "ner"
-  lang: "en"
+  lang: "he"
   # ref_training_collections: "achronim_output webpages_output rishonim_output_silver gilyon_output"
   # ref_training_collections: "webpages_output achronim_output gilyon_output:100"
-  ref_training_collections: "talmud_ner"
+  ref_training_collections: "ner_he_output"
   subref_training_collections: "webpages_sub_citation_output gilyon_sub_citation_output"
   annotator_pod: "annotator-bodum-0"
   webpages_dir: "../web_scraper/output"

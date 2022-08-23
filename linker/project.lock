@@ -105,32 +105,32 @@ pretrain:
 train-ref-model:
   cmd: python -m spacy run train-ref-model
   script:
-    - python ../util/merge_collections.py -o merged_output -c talmud_ner
-    - python -m spacy train configs/ref-v3.2.cfg --output models/ner_en_achronim --paths.vectors
-      vectors/all_text_en_fasttext_model_50 --paths.input_collection merged_output
-      --nlp.lang en --paths.init_tok2vec models/pretrain_ref_en_50/model8.bin --pretraining.objective.hidden_size
+    - python ../util/merge_collections.py -o merged_output -c ner_he_output
+    - python -m spacy train configs/ref-v3.2.cfg --output models/ner_he --paths.vectors
+      vectors/all_text_he_fasttext_model_50 --paths.input_collection merged_output
+      --nlp.lang he --paths.init_tok2vec models/pretrain_ref_he_50/model8.bin --pretraining.objective.hidden_size
       50 --code ../util/spacy_registry.py --gpu-id 0
   deps:
     - path: configs/ref-v3.2.cfg
-      md5: 945cba6b0751def695897be941a4f341
-    - path: models/pretrain_ref_en_50
-      md5: f6dfea501436928dee00fd74b6ce8f32
+      md5: f62d689b0d64178a964cb7ea0a7ce70f
+    - path: models/pretrain_ref_he_50
+      md5: 1172f2de4b50d08dc7cfd84ede1d445c
   outs:
-    - path: models/ner_en
-      md5: null
+    - path: models/ner_he
+      md5: 755553bc35866f40aafafef96632c8a9
   spacy_version: 3.2.3
   spacy_git_version: 99425de36
 upload-models:
   cmd: python -m spacy run upload-models
   script:
-    - tar cf models/ner_en.tar models/ner_en/model-best
+    - tar cf models/ner_he.tar models/ner_he/model-best
     - kubectl exec -it annotator-bodum-0 -- apt-get install -y rsync
-    - krsync.sh -av --progress --stats models/ner_en.tar annotator-bodum-0:/prodigy-disk/ner_en.tar
-    - kubectl exec -it annotator-bodum-0 -- tar xf /prodigy-disk/ner_en.tar
-    - kubectl exec -it annotator-bodum-0 -- rm -rf /prodigy-disk/ner_en
-    - kubectl exec -it annotator-bodum-0 -- mv models/ner_en/model-best /prodigy-disk/ner_en
-    - kubectl exec -it annotator-bodum-0 -- rm -rf models /prodigy-disk/ner_en.tar
-    - rm -rf models/ner_en.tar
+    - krsync.sh -av --progress --stats models/ner_he.tar annotator-bodum-0:/prodigy-disk/ner_he.tar
+    - kubectl exec -it annotator-bodum-0 -- tar xf /prodigy-disk/ner_he.tar
+    - kubectl exec -it annotator-bodum-0 -- rm -rf /prodigy-disk/ner_he
+    - kubectl exec -it annotator-bodum-0 -- mv models/ner_he/model-best /prodigy-disk/ner_he
+    - kubectl exec -it annotator-bodum-0 -- rm -rf models /prodigy-disk/ner_he.tar
+    - rm -rf models/ner_he.tar
   deps: []
   outs: []
   spacy_version: 3.2.3
