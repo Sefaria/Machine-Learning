@@ -42,16 +42,16 @@ workflows:
 commands:
   - name: "download-sefaria-dump"
     script:
-      - "sh scripts/restore_db.sh"
+      - "sh ../util/restore_db.sh"
     deps:
       # actually dependent on dump file in Google Cloud...
-      - "scripts/restore_db.sh"
+      - "../util/restore_db.sh"
 
   - name: "export-library"
     script:
-      - "python scripts/library_exporter.py ${vars.lang} -f both -w ${vars.webpages_dir} -o corpus/all_text_${vars.lang} -s"
+      - "python ../util/library_exporter.py ${vars.lang} -f both -w ${vars.webpages_dir} -o corpus/all_text_${vars.lang} -s"
     deps:
-      - "scripts/restore_db.sh"
+      - "../util/restore_db.sh"
     outputs:
       - "corpus/all_text_${vars.lang}.txt"
       - "corpus/all_text_${vars.lang}.jsonl"
@@ -79,9 +79,9 @@ commands:
 
   - name: train-fasttext
     script:
-      - "python scripts/embedding_scripts.py fasttext -d ${vars.embedding_size} -i corpus/all_text_${vars.lang}.txt -o vectors/all_text_${vars.lang}.fasttext_${vars.embedding_size}"
+      - "python ../util/embedding_scripts.py fasttext -d ${vars.embedding_size} -i corpus/all_text_${vars.lang}.txt -o vectors/all_text_${vars.lang}.fasttext_${vars.embedding_size}"
     deps:
-      - scripts/embedding_scripts.py
+      - "../util/embedding_scripts.py"
       - "corpus/all_text_${vars.lang}.txt"
     outputs:
       - vectors/all_text_${vars.lang}.fasttext_${vars.embedding_size}.bin

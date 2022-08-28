@@ -2,8 +2,8 @@ import django, re, csv, srsly, json, argparse
 django.setup()
 from tqdm import tqdm
 import fasttext
-from gensim.models import Word2Vec
-from gensim.models.word2vec import LineSentence
+# from gensim.models import Word2Vec
+# from gensim.models.word2vec import LineSentence
 
 
 def train_fasttext(dim, train_file, output):
@@ -79,6 +79,7 @@ def init_argparse() -> argparse.ArgumentParser:
     parser.add_argument('-d', '--dim', dest='dim', type=int)
     parser.add_argument('-o', '--output', dest='output_stem')
     return parser
+
 
 if __name__ == "__main__":
     parser = init_argparse()
