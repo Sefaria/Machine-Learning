@@ -26,14 +26,12 @@ directories: ["corpus", "vectors", "scripts", "configs", "models"]
 ## haven't changed, it won't be re-run.
 workflows:
   all:
-    #- download-sefaria-dump
-    #- export-library
-    #- train-floret
-    #- init-floret-vectors
+    - download-sefaria-dump
+    - export-library
     - train-fasttext
     - init-fasttext-vectors
     - pretrain
-    #- train-ref-model
+    - train-ref-model
 
 # Project commands, specified in a style similar to CI config files (e.g. Azure
 # pipelines). The name is the command name that lets you trigger the command
@@ -55,27 +53,6 @@ commands:
     outputs:
       - "corpus/all_text_${vars.lang}.txt"
       - "corpus/all_text_${vars.lang}.jsonl"
-
-  - name: "train-floret"
-    help: "Train floret vectors"
-    script:
-      - "python scripts/train_floret.py --model cbow --dim 300 --mincount 10 --minn 3 --maxn 6 --neg 10 --mode floret --hashcount 2 --bucket 20000 --thread ${vars.n_process} --epoch 10 corpus/all_text_${vars.lang}.txt vectors/all_text_${vars.lang}"
-    deps:
-      - "scripts/train_floret.py"
-      - "corpus/all_text_${vars.lang}.txt"
-    outputs:
-      - "vectors/all_text_${vars.lang}.floret"
-      - "vectors/all_text_${vars.lang}.vec"
-      - "vectors/all_text_${vars.lang}.bin"
-
-  - name: "init-floret-vectors"
-    help: "Create a floret vectors model"
-    script:
-      - "python -m spacy init vectors ${vars.lang} vectors/all_text_${vars.lang}.floret vectors/all_text_${vars.lang}_floret_model --mode floret"
-    deps:
-      - "vectors/all_text_${vars.lang}.floret"
-    outputs:
-      - "vectors/all_text_${vars.lang}_floret_model"
 
   - name: train-fasttext
     script:
