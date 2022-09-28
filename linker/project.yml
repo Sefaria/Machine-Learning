@@ -1,6 +1,8 @@
 title: "Linker Pipeline"
 description: "All preprocessing and training for linker models"
 spacy_version: ">=3.2.0,<4.0.0"
+remotes:
+  default: "gs://sefaria-ml-models"
 # Variables can be referenced across the project.yml using ${vars.var_name}
 vars:
   name: "ner"
