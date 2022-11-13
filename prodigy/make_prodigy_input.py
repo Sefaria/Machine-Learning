@@ -120,7 +120,7 @@ def make_random_prodigy_input(lang, prev_tagged_refs, collection, with_links=Fal
     import_data_to_collection(walker.prodigyInput, collection)
 
 
-def make_prodigy_input(title_list, vtitle_list, lang_list, prev_tagged_refs, collection, with_links=False):
+def make_prodigy_input(title_list, vtitle_list, lang_list, prev_tagged_refs, collection, with_links=False, filter_func=lambda x: x):
     walker = ProdigyInputWalker(prev_tagged_refs, with_links)
     for title, vtitle, lang in tqdm(zip(title_list, vtitle_list, lang_list), total=len(title_list)):
         if vtitle is None:
@@ -129,6 +129,7 @@ def make_prodigy_input(title_list, vtitle_list, lang_list, prev_tagged_refs, col
             version = Version().load({"title": title, "versionTitle": vtitle, "language": lang})
         version.walk_thru_contents(walker.action)
     walker.make_final_input(400)
+    walker.prodigyInput = filter_func(walker.prodigyInput)
     import_data_to_collection(walker.prodigyInput, collection)
 
 
@@ -205,7 +206,7 @@ def combine_sentences_to_paragraph(sentences):
     }
 
 def combine_all_sentences_to_paragraphs():
-    my_db = MongoProdigyDBManager('localhost', 27017)
+    my_db = MongoProdigyDBManager('blah', 'localhost', 27017)
     examples = my_db.db.examples
     combined_examples = []
     examples_by_ref = defaultdict(list)
