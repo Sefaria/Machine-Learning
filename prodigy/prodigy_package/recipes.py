@@ -147,15 +147,21 @@ def ref_tagging_recipe(dataset, input_collection, output_collection, labels, mod
         train_model(nlp, temp_stream, model_dir)
     all_data = list(getattr(my_db.db, input_collection).find({}, {"_id": 0}))  # TODO loading all data into ram to avoid issues of cursor timing out
     stream = filter_existing_in_output(all_data, my_db)
+    print("filter_existing_in_output")
+    next(stream)
     # stream = split_sentences_nltk(stream)
-    # stream = filter_long_texts(stream, max_length=2000)
+    stream = filter_long_texts(stream, max_length=2000)
+    print("filter_long_texts")
+    next(stream)
     if model_exists and should_add_predictions == 1:
         stream = add_model_predictions(nlp, stream, min_found=1)
     stream = add_tokens(nlp, stream, skip=True)
-    assert len(list(stream)) > 0, "add_tokens"
+    print("add_tokens")
+    next(stream)
     if view_id == "ner":
         stream = split_spans(stream)
-
+    print("split_spans")
+    next(stream)
 
     def update(annotations):
         prev_annotations = my_db.db.examples.find({}, {"_id": 0}).limit(1000).sort([("_id", -1)])
