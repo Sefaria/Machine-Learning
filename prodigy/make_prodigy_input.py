@@ -10,12 +10,17 @@ from sefaria.helper.normalization import NormalizerComposer
 
 
 class ProdigyInputWalker:
-    def __init__(self, prev_tagged_refs=None, with_links=False):
+    def __init__(self, prev_tagged_refs=None, with_links=False, preprocess_input=None):
         self.prodigyInput = []
         self.prodigyInputByVersion = defaultdict(list)
         self.with_links = with_links
         self.prev_tagged_refs = prev_tagged_refs or []
         self.normalizer = NormalizerComposer(['unidecode', 'br-tag', 'itag' ,'html', 'maqaf', 'cantillation', 'double-space'])
+        if preprocess_input:
+            self.preprocess_input = preprocess_input
+        else:
+            self.preprocess_input = self.default_preprocesser
+
 
     @staticmethod
     def get_refs_with_location(text, lang, citing_only=True):
@@ -61,7 +66,7 @@ class ProdigyInputWalker:
         itag_texts = [itag.decode() for itag in itags]
         return [itag_text for itag_text in itag_texts if len(itag_text) > 20]
 
-    def get_input(self, text, en_tref, language):
+    def default_preprocesser(self, text):
         itag_texts = self.get_itag_texts(text)
         try:
             text = self.normalizer.normalize(text)
@@ -70,6 +75,10 @@ class ProdigyInputWalker:
             print(e)
             text_list = []
         text_list += [self.normalizer.normalize(itag_text).strip() for itag_text in itag_texts]
+        return text_list
+
+    def get_input(self, text, en_tref, language):
+        text_list = self.preprocess_input(text)
         temp_input_list = []
         for t in text_list:
             if len(t) <= 20: continue
@@ -85,6 +94,8 @@ class ProdigyInputWalker:
             }
             temp_input_list += [temp_input]
         return temp_input_list
+    
+
     
     def action(self, text, en_tref, he_tref, version):
         if en_tref in self.prev_tagged_refs:
@@ -120,8 +131,9 @@ def make_random_prodigy_input(lang, prev_tagged_refs, collection, with_links=Fal
     import_data_to_collection(walker.prodigyInput, collection)
 
 
-def make_prodigy_input(title_list, vtitle_list, lang_list, prev_tagged_refs, collection, with_links=False, filter_func=lambda x: x):
-    walker = ProdigyInputWalker(prev_tagged_refs, with_links)
+def make_prodigy_input(title_list, vtitle_list, lang_list, prev_tagged_refs, collection, with_links=False, 
+                       preprocess=None, maxProdigyInput=None):
+    walker = ProdigyInputWalker(prev_tagged_refs, with_links, preprocess_input=preprocess)
     for title, vtitle, lang in tqdm(zip(title_list, vtitle_list, lang_list), total=len(title_list)):
         if vtitle is None:
             version = VersionSet({"title": title, "language": lang}, sort=[("priority", -1)], limit=1).array()[0]
@@ -129,7 +141,8 @@ def make_prodigy_input(title_list, vtitle_list, lang_list, prev_tagged_refs, col
             version = Version().load({"title": title, "versionTitle": vtitle, "language": lang})
         version.walk_thru_contents(walker.action)
     walker.make_final_input(400)
-    walker.prodigyInput = filter_func(walker.prodigyInput)
+    if maxProdigyInput:
+        walker.prodigyInput = walker.prodigyInput[:maxProdigyInput]
     import_data_to_collection(walker.prodigyInput, collection)
 
 
