@@ -10,6 +10,15 @@ from sefaria.model import *
 from sefaria.system.exceptions import InputError
 from sefaria.helper.normalization import NormalizerByLang, NormalizerComposer
 
+
+def create_normalizer():
+    base_normalizer_steps = ['unidecode', 'html', 'double-space']
+    return NormalizerByLang({
+        'en': NormalizerComposer(base_normalizer_steps),
+        'he': NormalizerComposer(base_normalizer_steps + ['maqaf', 'cantillation']),
+    })
+
+
 class TextWalker:
 
     def __init__(self, output_text, output_jsonl, lang, max_line_len=None, format='both', overlap=0, webpages_dir=None):
@@ -20,11 +29,7 @@ class TextWalker:
         self.format = format
         self.overlap = overlap
         self.webpages_dir = webpages_dir
-        base_normalizer_steps = ['unidecode', 'html', 'double-space']
-        self.normalizer = NormalizerByLang({
-            'en': NormalizerComposer(base_normalizer_steps),
-            'he': NormalizerComposer(base_normalizer_steps + ['maqaf', 'cantillation']),
-        })
+        self.normalizer = create_normalizer()
         self.nlp = self.create_nlp()
 
     def create_nlp(self):
