@@ -1,0 +1,133 @@
+title: "Linker Pipeline"
+description: "All preprocessing and training for linker models"
+spacy_version: ">=3.2.0,<4.0.0"
+# Variables can be referenced across the project.yml using ${vars.var_name}
+vars:
+  name: "ner"
+  lang: "he"
+  # ref_training_collections: "achronim_output webpages_output rishonim_output_silver gilyon_output"
+  # ref_training_collections: "webpages_output achronim_output gilyon_output:100"
+  ref_training_collections: "ner_he_output"
+  subref_training_collections: "webpages_sub_citation_output gilyon_sub_citation_output"
+  annotator_pod: "annotator-bodum-0"
+  webpages_dir: "../web_scraper/output"
+  embedding_size: 50
+  pretrain_model_name: "model8.bin"
+  # number of processes (tokenization) and threads (fasttext)
+  n_process: 8
+
+
+# These are the directories that the project needs. The project CLI will make
+# sure that they always exist.
+directories: ["corpus", "vectors", "scripts", "configs", "models"]
+
+## Workflows are sequences of commands (see below) executed in order. You can
+## run them via "spacy project run [workflow]". If a commands's inputs/outputs
+## haven't changed, it won't be re-run.
+workflows:
+  all:
+    - download-sefaria-dump
+    - export-library
+    - train-fasttext
+    - init-fasttext-vectors
+    - pretrain
+    - train-ref-model
+
+# Project commands, specified in a style similar to CI config files (e.g. Azure
+# pipelines). The name is the command name that lets you trigger the command
+# via "spacy project run [command] [path]". The help message is optional and
+# shown when executing "spacy project run [optional command] [path] --help".
+commands:
+  - name: "download-sefaria-dump"
+    script:
+      - "sh ../util/restore_db.sh"
+    deps:
+      # actually dependent on dump file in Google Cloud...
+      - "../util/restore_db.sh"
+
+  - name: "export-library"
+    script:
+      - "python ../util/library_exporter.py ${vars.lang} -f both -w ${vars.webpages_dir} -o corpus/all_text_${vars.lang} -s"
+    deps:
+      - "../util/restore_db.sh"
+    outputs:
+      - "corpus/all_text_${vars.lang}.txt"
+      - "corpus/all_text_${vars.lang}.jsonl"
+
+  - name: train-fasttext
+    script:
+      - "python ../util/embedding_scripts.py fasttext -d ${vars.embedding_size} -i corpus/all_text_${vars.lang}.txt -o vectors/all_text_${vars.lang}.fasttext_${vars.embedding_size}"
+    deps:
+      - "../util/embedding_scripts.py"
+      - "corpus/all_text_${vars.lang}.txt"
+    outputs:
+      - vectors/all_text_${vars.lang}.fasttext_${vars.embedding_size}.bin
+      - vectors/all_text_${vars.lang}.fasttext_${vars.embedding_size}.vec
+
+  - name: "init-fasttext-vectors"
+    script:
+      - "python -m spacy init vectors ${vars.lang} vectors/all_text_${vars.lang}.fasttext_${vars.embedding_size}.vec vectors/all_text_${vars.lang}_fasttext_model_${vars.embedding_size}"
+    deps:
+      - vectors/all_text_${vars.lang}.fasttext_${vars.embedding_size}.vec
+    outputs:
+      - "vectors/all_text_${vars.lang}_fasttext_model_${vars.embedding_size}"
+
+  - name: "pretrain"
+    script:
+      - "python -m spacy pretrain configs/ref-v3.2.cfg models/pretrain_ref_${vars.lang}_${vars.embedding_size} --paths.vectors vectors/all_text_${vars.lang}_fasttext_model_${vars.embedding_size} --paths.raw_text corpus/all_text_${vars.lang}.jsonl --paths.input_collection ${vars.name}_output --nlp.lang ${vars.lang} --pretraining.objective.hidden_size ${vars.embedding_size} --code ../util/spacy_registry.py --gpu-id 0"
+    deps:
+      - "configs/ref-v3.2.cfg"
+      - vectors/all_text_${vars.lang}_fasttext_model_${vars.embedding_size}
+    outputs:
+      - "models/pretrain_ref_${vars.lang}_${vars.embedding_size}"
+
+  - name: "train-ref-model"
+    script:
+      - "python ../util/merge_collections.py -o merged_output -c ${vars.ref_training_collections}"
+      - "python -m spacy train configs/ref-v3.2.cfg --output models/${vars.name}_${vars.lang} --paths.vectors vectors/all_text_${vars.lang}_fasttext_model_${vars.embedding_size} --paths.input_collection merged_output --nlp.lang ${vars.lang} --paths.init_tok2vec models/pretrain_ref_${vars.lang}_${vars.embedding_size}/${vars.pretrain_model_name} --pretraining.objective.hidden_size ${vars.embedding_size} --code ../util/spacy_registry.py --gpu-id 0"
+    deps:
+      - "configs/ref-v3.2.cfg"
+      - "models/pretrain_ref_${vars.lang}_${vars.embedding_size}"
+    outputs:
+      - "models/${vars.name}_${vars.lang}"
+
+  - name: "train-blank-pretrained-model"
+    script:
+      - "python ../util/merge_collections.py -o merged_output -c achronim_output:2"
+      - "python -m spacy train configs/ref-v3.2.cfg --output models/pretrain_usable --paths.vectors vectors/all_text_${vars.lang}_fasttext_model_${vars.embedding_size} --paths.input_collection merged_output --nlp.lang ${vars.lang} --paths.init_tok2vec models/pretrain_ref_${vars.lang}_${vars.embedding_size}/${vars.pretrain_model_name} --training.max_steps 1 --pretraining.objective.hidden_size ${vars.embedding_size} --code ../util/spacy_registry.py --gpu-id 0"
+    deps:
+      - "configs/ref-v3.2.cfg"
+      - "models/pretrain_ref_${vars.lang}_${vars.embedding_size}"
+    outputs:
+      - "models/pretrain_usable"
+
+  - name: "train-subref-model"
+    script:
+      - "python ../util/merge_collections.py -o merged_subref_output -c ${vars.subref_training_collections}"
+      - "python -m spacy train configs/subref-v3.2.cfg --output models/${vars.name}_subref_${vars.lang} --paths.vectors vectors/all_text_${vars.lang}_fasttext_model_${vars.embedding_size} --paths.input_collection merged_subref_output --nlp.lang ${vars.lang} --paths.init_tok2vec models/pretrain_ref_${vars.lang}_${vars.embedding_size}/${vars.pretrain_model_name} --pretraining.objective.hidden_size ${vars.embedding_size} --code ../util/spacy_registry.py --gpu-id 0"
+    deps:
+      - "configs/subref-v3.2.cfg"
+      - "models/pretrain_ref_${vars.lang}_${vars.embedding_size}"
+    outputs:
+      - "models/${vars.name}_subref_${vars.lang}"
+
+  - name: "upload-models"
+    help: "package and upload ref and subref models to annotator cauldron"
+    script:
+      # ref model
+      - "tar cf models/${vars.name}_${vars.lang}.tar models/${vars.name}_${vars.lang}/model-best"
+      - "kubectl exec -it ${vars.annotator_pod} -- apt-get install -y rsync"  # make sure rsync exists on pod
+      - "krsync.sh -av --progress --stats models/${vars.name}_${vars.lang}.tar ${vars.annotator_pod}:/prodigy-disk/${vars.name}_${vars.lang}.tar"
+      - "kubectl exec -it ${vars.annotator_pod} -- tar xf /prodigy-disk/${vars.name}_${vars.lang}.tar"
+      - "kubectl exec -it ${vars.annotator_pod} -- rm -rf /prodigy-disk/${vars.name}_${vars.lang}"
+      - "kubectl exec -it ${vars.annotator_pod} -- mv models/${vars.name}_${vars.lang}/model-best /prodigy-disk/${vars.name}_${vars.lang}"
+      - "kubectl exec -it ${vars.annotator_pod} -- rm -rf models /prodigy-disk/${vars.name}_${vars.lang}.tar"
+      - "rm -rf models/${vars.name}_${vars.lang}.tar"
+      # subref model
+#      - "tar cf models/${vars.name}_subref_${vars.lang}.tar models/${vars.name}_subref_${vars.lang}/model-best"
+#      - "krsync.sh -av --progress --stats models/${vars.name}_subref_${vars.lang}.tar ${vars.annotator_pod}:/prodigy-disk/${vars.name}_subref_${vars.lang}.tar"
+#      - "kubectl exec -it ${vars.annotator_pod} -- tar xf /prodigy-disk/${vars.name}_subref_${vars.lang}.tar"
+#      - "kubectl exec -it ${vars.annotator_pod} -- rm -rf /prodigy-disk/${vars.name}_subref_${vars.lang}"
+#      - "kubectl exec -it ${vars.annotator_pod} -- mv models/${vars.name}_subref_${vars.lang}/model-best /prodigy-disk/${vars.name}_subref_${vars.lang}"
+#      - "kubectl exec -it ${vars.annotator_pod} -- rm -rf models /prodigy-disk/${vars.name}_subref_${vars.lang}.tar"
+#      - "rm -rf models/${vars.name}_subref_${vars.lang}.tar"
