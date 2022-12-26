@@ -11,6 +11,8 @@ from functools import reduce
 from tqdm import tqdm
 from spacy.lang.en import English
 from prodigy.functions import stream_data, get_corpus_data
+from spacy.lang.he import Hebrew
+from prodigy.functions import stream_data
 from util.spacy_registry import inner_punct_tokenizer_factory
 from db_manager import MongoProdigyDBManager
 
@@ -70,8 +72,7 @@ def make_evaluation_files(evaluation_data, ner_model, output_folder, start=0, la
             "tp": [list(ent) for ent in temp_tp],
             "fp": [list(ent) for ent in temp_fp],
             "fn": [list(ent) for ent in temp_fn],
-            "ref": example.predicted.user_data.get('Ref', ''),
-            "_id": example.predicted.user_data['_id'],
+            "meta": example.predicted.user_data,
         }]
 
     srsly.write_jsonl(f"{output_folder}/doc_evaluation.jsonl", output_json)
@@ -110,7 +111,7 @@ def export_tagged_data_as_html(tagged_data, output_folder, is_binary=True, start
             "tp": [],
             "fp": [],
             "fn": [],
-            "ref": example.predicted.user_data.get('Ref', ''),
+            "ref": example.predicted.user_data['Ref'],
             "_id": example.predicted.user_data['_id'],
         }
         if is_binary:
@@ -161,7 +162,7 @@ def make_evaluation_csv(data, output_folder, output_filename):
             prev_end = 0 if j == 0 else named_entities[j-1][1]
             next_start = None if (j == len(named_entities) - 1) else named_entities[j+1][0]
             rows += [{
-                "Ref": d.get('ref', ''),
+                "Ref": d['meta'].get('ref', '') if 'meta' in d else d.get('ref', ''),
                 'Named Entity': d['text'][start:end],
                 'Label': label,
                 'Status': truthiness,
