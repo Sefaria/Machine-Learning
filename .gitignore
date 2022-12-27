@@ -1,4 +1,4 @@
-corpus/dump/
+torah_ner/corpus/dump/
 vectors/
 models/
 .idea/
