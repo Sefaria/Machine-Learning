@@ -1,7 +1,10 @@
-corpus/
-vectors/
+*/corpus/dump/
+dump_small.tar.gz
 models/
 .idea/
 prodigy/temp/
 web_scraper/output
 web_scraper/urls.txt
+prodigy/output
+.DS_Store
+__pycache__

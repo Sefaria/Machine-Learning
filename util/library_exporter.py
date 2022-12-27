@@ -3,7 +3,7 @@ django.setup()
 from tqdm import tqdm
 from collections import defaultdict
 
-from util.spacy_registry import inner_punct_tokenizer_factory, get_lang_detect_nlp
+from spacy_registry import inner_punct_tokenizer_factory, get_lang_detect_nlp
 from spacy.lang.en import English
 from spacy.lang.he import Hebrew
 from sefaria.model import *
@@ -19,6 +19,16 @@ def create_normalizer():
     })
 
 
+def create_nlp(lang):
+    """
+    Create nlp object for tokenization
+    :return:
+    """
+    nlp = Hebrew() if lang == 'he' else English()
+    nlp.tokenizer = inner_punct_tokenizer_factory()(nlp)
+    return nlp
+
+
 class TextWalker:
 
     def __init__(self, output_text, output_jsonl, lang, max_line_len=None, format='both', overlap=0, webpages_dir=None):
@@ -30,16 +40,7 @@ class TextWalker:
         self.overlap = overlap
         self.webpages_dir = webpages_dir
         self.normalizer = create_normalizer()
-        self.nlp = self.create_nlp()
-
-    def create_nlp(self):
-        """
-        Create nlp object for tokenization
-        :return:
-        """
-        nlp = Hebrew() if self.lang == 'he' else English()
-        nlp.tokenizer = inner_punct_tokenizer_factory()(nlp)
-        return nlp
+        self.nlp = create_nlp(self.lang)
 
     def write_lines(self, text):
         text = self.normalizer.normalize(text, lang=self.lang)
@@ -72,7 +73,10 @@ class TextWalker:
                 continue
 
     def walk_all_webpages(self):
-        from util.webpages_util import walk_all_webpages
+        from util.webpages_util import walk_all_webpages, extract_webpages_output_dir
+
+        extract_webpages_output_dir(f"{self.webpages_dir}.tar.gz", self.webpages_dir)
+
         for webpage in walk_all_webpages(self.webpages_dir, self.lang):
             if not webpage.has_real_data(): continue
             self.write_lines(webpage.get_text())

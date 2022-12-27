@@ -275,15 +275,15 @@ if __name__ == "__main__":
     # data = stream_data('localhost', 27017, 'merged_output', 'gilyon_input', 61, 0.5, 'test', 20)(nlp)
     # print(make_evaluation_files(data, nlp, './temp', lang='he', only_errors=False))
 
-    #data = stream_data('localhost', 27017, 'ner_en_output2', 'gilyon_input', -1, 1.0, 'train', 20, unique_by_metadata=True)(nlp)
-    #export_tagged_data_as_html(data, './output/evaluation_results', is_binary=False, start=0, lang='en')
+    data = stream_data('localhost', 27017, 'ner_he_output', 'gilyon_input', 61, 0.5, 'test', 20, unique_by_metadata=True)(nlp)
+    export_tagged_data_as_html(data, './output/evaluation_results', is_binary=False, start=0, lang='he')
     # convert_jsonl_to_json('./output/evaluation_results/doc_evaluation.jsonl')
     # convert_jsonl_to_csv('./output/evaluation_results/doc_evaluation.jsonl')
     # spacy.training.offsets_to_biluo_tags(doc, entities)
 
     ## Output test data to collection to refine in prodigy
-    data = get_corpus_data('localhost', 27017, 'merged_output', 'gilyon_input', 61, 0.5, 'test', 20)
-    dbm = MongoProdigyDBManager("test_data_to_refine")
-    dbm.output_collection.delete_many({})
-    dbm.output_collection.bulk_write([InsertOne(x) for x in data])
+    # data = get_corpus_data('localhost', 27017, 'merged_output', 'gilyon_input', 61, 0.5, 'test', 20)
+    # dbm = MongoProdigyDBManager("test_data_to_refine")
+    # dbm.output_collection.delete_many({})
+    # dbm.output_collection.bulk_write([InsertOne(x) for x in data])
 
