@@ -1,0 +1,4 @@
+outs:
+- md5: c9b01ea4736b927ed5ecd32305c9a67c
+  size: 200774
+  path: ref_he_test.spacy

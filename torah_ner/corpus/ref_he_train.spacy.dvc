@@ -1,0 +1,4 @@
+outs:
+- md5: 9cf39449a61aa69e76eca416a748be10
+  size: 721077
+  path: ref_he_train.spacy
