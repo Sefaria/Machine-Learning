@@ -5,3 +5,6 @@ models/
 prodigy/temp/
 web_scraper/output
 web_scraper/urls.txt
+prodigy/output
+.DS_Store
+__pycache__

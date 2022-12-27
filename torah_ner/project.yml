@@ -5,10 +5,8 @@ spacy_version: ">=3.2.0,<4.0.0"
 vars:
   name: "ner"
   lang: "he"
-  # ref_training_collections: "achronim_output webpages_output rishonim_output_silver gilyon_output"
-  # ref_training_collections: "webpages_output achronim_output gilyon_output:100"
-  ref_training_collections: "ner_he_output"
-  subref_training_collections: "webpages_sub_citation_output gilyon_sub_citation_output"
+  training_collections: ""
+  config: ""
   annotator_pod: "annotator-bodum-0"
   webpages_dir: "../web_scraper/output"
   embedding_size: 50
@@ -31,7 +29,7 @@ workflows:
     - train-fasttext
     - init-fasttext-vectors
     - pretrain
-    - train-ref-model
+    - train-ner-model
 
 # Project commands, specified in a style similar to CI config files (e.g. Azure
 # pipelines). The name is the command name that lets you trigger the command
@@ -74,19 +72,29 @@ commands:
 
   - name: "pretrain"
     script:
-      - "python -m spacy pretrain configs/ner-v3.4.cfg models/pretrain_ref_${vars.lang}_${vars.embedding_size} --paths.vectors vectors/all_text_${vars.lang}_fasttext_model_${vars.embedding_size} --paths.raw_text corpus/all_text_${vars.lang}.jsonl --paths.input_collection ${vars.name}_output --nlp.lang ${vars.lang} --pretraining.objective.hidden_size ${vars.embedding_size} --code ../util/spacy_registry.py --gpu-id 0"
+      - "python -m spacy pretrain ${vars.config} models/pretrain_ref_${vars.lang}_${vars.embedding_size} --paths.vectors vectors/all_text_${vars.lang}_fasttext_model_${vars.embedding_size} --paths.raw_text corpus/all_text_${vars.lang}.jsonl --paths.input_collection ${vars.name}_output --nlp.lang ${vars.lang} --pretraining.objective.hidden_size ${vars.embedding_size} --code ../util/spacy_registry.py --gpu-id 0"
     deps:
-      - "configs/ner-v3.4.cfg"
+      - "${vars.config}"
       - vectors/all_text_${vars.lang}_fasttext_model_${vars.embedding_size}
     outputs:
       - "models/pretrain_ref_${vars.lang}_${vars.embedding_size}"
 
   - name: "train-ner-model"
     script:
-      - "python ../util/merge_collections.py -o merged_output -c ${vars.ref_training_collections}"
-      - "python -m spacy train configs/ner-v3.4.cfg --output models/${vars.name}_${vars.lang} --paths.vectors vectors/all_text_${vars.lang}_fasttext_model_${vars.embedding_size} --paths.input_collection merged_output --nlp.lang ${vars.lang} --paths.init_tok2vec models/pretrain_ref_${vars.lang}_${vars.embedding_size}/${vars.pretrain_model_name} --pretraining.objective.hidden_size ${vars.embedding_size} --code ../util/spacy_registry.py --gpu-id 0"
+      - "python ../util/merge_collections.py -o merged_output -c ${vars.training_collections}"
+      - "python -m spacy train ${vars.config} --output models/${vars.name}_${vars.lang} --paths.vectors vectors/all_text_${vars.lang}_fasttext_model_${vars.embedding_size} --paths.input_collection merged_output --nlp.lang ${vars.lang} --paths.init_tok2vec models/pretrain_ref_${vars.lang}_${vars.embedding_size}/${vars.pretrain_model_name} --pretraining.objective.hidden_size ${vars.embedding_size} --code ../util/spacy_registry.py --gpu-id 0"
     deps:
-      - "configs/ner-v3.4.cfg"
+      - "${vars.config}"
       - "models/pretrain_ref_${vars.lang}_${vars.embedding_size}"
     outputs:
       - "models/${vars.name}_${vars.lang}"
+
+  - name: "train-blank-pretrained-model"
+    script:
+      - "python ../util/merge_collections.py -o merged_output -c achronim_output:2"
+      - "python -m spacy train ${vars.config} --output models/pretrain_usable --paths.vectors vectors/all_text_${vars.lang}_fasttext_model_${vars.embedding_size} --paths.input_collection merged_output --nlp.lang ${vars.lang} --paths.init_tok2vec models/pretrain_ref_${vars.lang}_${vars.embedding_size}/${vars.pretrain_model_name} --training.max_steps 1 --pretraining.objective.hidden_size ${vars.embedding_size} --code ../util/spacy_registry.py --gpu-id 0"
+    deps:
+      - "${vars.config}"
+      - "models/pretrain_ref_${vars.lang}_${vars.embedding_size}"
+    outputs:
+      - "models/pretrain_usable"
