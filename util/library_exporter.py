@@ -19,6 +19,16 @@ def create_normalizer():
     })
 
 
+def create_nlp(lang):
+    """
+    Create nlp object for tokenization
+    :return:
+    """
+    nlp = Hebrew() if lang == 'he' else English()
+    nlp.tokenizer = inner_punct_tokenizer_factory()(nlp)
+    return nlp
+
+
 class TextWalker:
 
     def __init__(self, output_text, output_jsonl, lang, max_line_len=None, format='both', overlap=0, webpages_dir=None):
@@ -30,16 +40,7 @@ class TextWalker:
         self.overlap = overlap
         self.webpages_dir = webpages_dir
         self.normalizer = create_normalizer()
-        self.nlp = self.create_nlp()
-
-    def create_nlp(self):
-        """
-        Create nlp object for tokenization
-        :return:
-        """
-        nlp = Hebrew() if self.lang == 'he' else English()
-        nlp.tokenizer = inner_punct_tokenizer_factory()(nlp)
-        return nlp
+        self.nlp = create_nlp(self.lang)
 
     def write_lines(self, text):
         text = self.normalizer.normalize(text, lang=self.lang)

@@ -52,6 +52,11 @@ commands:
       - "corpus/all_text_${vars.lang}.txt"
       - "corpus/all_text_${vars.lang}.jsonl"
 
+  - name: export-training-data
+    script:
+      - "python ../util/merge_collections.py -o merged_output -c ${vars.training_collections}"
+      - "python ../util/output_collection_to_docbin.py ${vars.lang} merged_output corpus/${vars.name}_${vars.lang}_training.spacy"
+
   - name: train-fasttext
     script:
       - "python ../util/embedding_scripts.py fasttext -d ${vars.embedding_size} -i corpus/all_text_${vars.lang}.txt -o vectors/all_text_${vars.lang}.fasttext_${vars.embedding_size}"

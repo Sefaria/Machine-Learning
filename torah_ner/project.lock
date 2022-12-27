@@ -1,28 +1,28 @@
 download-sefaria-dump:
   cmd: python -m spacy run download-sefaria-dump
   script:
-    - sh scripts/restore_db.sh
+    - sh ../util/restore_db.sh
   deps:
-    - path: scripts/restore_db.sh
+    - path: ../util/restore_db.sh
       md5: 5cafcd94fb535ddb8a8c93def7173a16
   outs: []
-  spacy_version: 3.2.3
-  spacy_git_version: 99425de36
+  spacy_version: 3.4.1
+  spacy_git_version: Unknown
 export-library:
   cmd: python -m spacy run export-library
   script:
-    - python scripts/library_exporter.py he -f both -w ../web_scraper/output -o corpus/all_text_he
+    - python ../util/library_exporter.py he -f both -w ../web_scraper/output -o corpus/all_text_he
       -s
   deps:
-    - path: scripts/restore_db.sh
+    - path: ../util/restore_db.sh
       md5: 5cafcd94fb535ddb8a8c93def7173a16
   outs:
     - path: corpus/all_text_he.txt
-      md5: a273c1c58eb11fe66458ad5b286617d1
+      md5: 75beb3bbc63bcb020666c28694543526
     - path: corpus/all_text_he.jsonl
-      md5: 63e8bd4dea42b13ca5602c3e1106257d
-  spacy_version: 3.2.3
-  spacy_git_version: 99425de36
+      md5: 2aac7b28ab7c6817824b2dd75ab73283
+  spacy_version: 3.4.1
+  spacy_git_version: Unknown
 train-floret:
   cmd: python -m spacy run train-floret
   script:
@@ -182,3 +182,13 @@ echo:
   outs: []
   spacy_version: 3.4.1
   spacy_git_version: 5c2a00cef
+export-training-data:
+  cmd: python -m spacy run export-training-data
+  script:
+    - python ../util/merge_collections.py -o merged_output -c webpages_output achronim_output
+      gilyon_output:100
+    - python ../util/output_collection_to_docbin.py he merged_output corpus/ref_he_training.spacy
+  deps: []
+  outs: []
+  spacy_version: 3.4.1
+  spacy_git_version: Unknown
