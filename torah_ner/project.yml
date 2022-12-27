@@ -30,7 +30,6 @@ workflows:
     - download-sefaria-dump
     - export-library
     - train-fasttext
-    - init-fasttext-vectors
     - pretrain
     - train-ner-model
 
