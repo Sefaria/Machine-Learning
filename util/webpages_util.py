@@ -82,7 +82,7 @@ def compress_webpages_output_dir(input_dir, tar_name):
         for (dirpath, dirnames, filenames) in os.walk(input_dir):
             for filename in tqdm(filenames, desc='walk all webpages'):
                 full_path = Path(dirpath).joinpath(filename)
-                tout.add(full_path)
+                tout.add(full_path, arcname=filename)
 
 def walk_all_webpages(dir, lang=None):
     for (dirpath, dirnames, filenames) in os.walk(dir):
