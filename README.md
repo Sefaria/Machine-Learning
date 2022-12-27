@@ -17,6 +17,17 @@ Run: `pip install -r requirements.txt`
 
 This repo uses DVC to track changes to large data files or models. DVC is installed using `requirements.txt`. However, you can follow [these instructions](https://dvc.org/doc/install/completion) to install shell completion as well.
 
+DVC is modeled after git. The following is a list of common DVC commands:
+
+```shell
+dvc add <filename>  # add filename to DVC tracking
+dvc pull            # pull latest data from remote
+dvc push            # push latest data to remote
+```
+
+See [here](https://dvc.org/doc/start/data-management/data-versioning) for more documentation.
+
+Note, we are currently using Google Storage on the development cluster as the remote for this repo.
 
 ## Run
 
