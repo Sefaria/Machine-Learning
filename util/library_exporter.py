@@ -73,7 +73,10 @@ class TextWalker:
                 continue
 
     def walk_all_webpages(self):
-        from util.webpages_util import walk_all_webpages
+        from util.webpages_util import walk_all_webpages, extract_webpages_output_dir
+
+        extract_webpages_output_dir(f"{self.webpages_dir}.tar.gz", self.webpages_dir)
+
         for webpage in walk_all_webpages(self.webpages_dir, self.lang):
             if not webpage.has_real_data(): continue
             self.write_lines(webpage.get_text())

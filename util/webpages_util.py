@@ -1,10 +1,11 @@
 import dataclasses
-import os, re
+import os, re, shutil
 from pathlib import Path
 from collections import defaultdict
 from typing import List, Optional
 from iso639 import languages
 import math
+import tarfile
 from util.spacy_registry import create_language_detector
 from sefaria.utils.hebrew import strip_cantillation
 import spacy
@@ -68,6 +69,20 @@ def get_webpage(filename) -> Optional[ScrapedWebPage]:
             text_lines=lines[3:],
             filename=filename
         )
+
+def extract_webpages_output_dir(tar_name, output_dir):
+    # try deleting output_dir if it exists
+    shutil.rmtree(output_dir, ignore_errors=True)
+
+    with tarfile.open(tar_name, 'r') as tin:
+        tin.extractall(output_dir)
+
+def compress_webpages_output_dir(input_dir, tar_name):
+    with tarfile.open(tar_name, "w") as tout:
+        for (dirpath, dirnames, filenames) in os.walk(input_dir):
+            for filename in tqdm(filenames, desc='walk all webpages'):
+                full_path = Path(dirpath).joinpath(filename)
+                tout.add(full_path)
 
 def walk_all_webpages(dir, lang=None):
     for (dirpath, dirnames, filenames) in os.walk(dir):
