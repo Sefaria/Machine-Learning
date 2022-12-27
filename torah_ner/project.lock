@@ -187,7 +187,8 @@ export-training-data:
   script:
     - python ../util/merge_collections.py -o merged_output -c webpages_output achronim_output
       gilyon_output:100
-    - python ../util/output_collection_to_docbin.py he merged_output corpus/ref_he_training.spacy
+    - python ../util/output_collection_to_docbin.py he merged_output corpus/ref_he
+      20 0.8 61
   deps: []
   outs: []
   spacy_version: 3.4.1

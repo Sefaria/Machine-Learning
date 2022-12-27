@@ -1,17 +1,16 @@
 from spacy.tokens import DocBin
 import typer
+from typing import List
 from library_exporter import create_nlp
-from db_manager import MongoProdigyDBManager
+from prodigy.functions import get_mongo_docs, get_train_test_data
 
 
-def main(lang: str, input_collection: str, output_file: str):
-    input_db = MongoProdigyDBManager(input_collection)
+def output_mongo_docs(mongo_docs: List[dict], lang: str, output_file: str) -> None:
     nlp = create_nlp(lang)
-    cursor = input_db.output_collection.find({}, {"_id": False, "tokens": False})
 
     # mostly copied from here https://spacy.io/usage/training#training-data
     doc_bin = DocBin()
-    for mongo_doc in cursor:
+    for mongo_doc in mongo_docs:
         doc = nlp(mongo_doc['text'])
         ents = []
         for raw_span in mongo_doc['spans']:
@@ -20,6 +19,14 @@ def main(lang: str, input_collection: str, output_file: str):
         doc.ents = ents
         doc_bin.add(doc)
     doc_bin.to_disk(output_file)
+
+
+def main(lang: str, input_collection: str, output_file_prefix: str, min_training_text_len: int, training_percentage: float, random_state: int, db_host: str = "localhost", db_port: int = 27017):
+    mongo_docs = get_mongo_docs(min_training_text_len, True, input_collection, db_host, db_port)
+    train_data, test_data = get_train_test_data(random_state, mongo_docs, training_percentage)
+    output_mongo_docs(train_data, lang, f"{output_file_prefix}_train.spacy")
+    output_mongo_docs(test_data, lang, f"{output_file_prefix}_test.spacy")
+
 
 if __name__ == '__main__':
     typer.run(main)

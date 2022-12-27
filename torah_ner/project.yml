@@ -13,6 +13,9 @@ vars:
   pretrain_model_name: "model8.bin"
   # number of processes (tokenization) and threads (fasttext)
   n_process: 8
+  min_training_text_len: 20
+  training_percentage: 0.8
+  random_seed: 61  # determined to be sufficiently random
 
 
 # These are the directories that the project needs. The project CLI will make
@@ -55,7 +58,7 @@ commands:
   - name: export-training-data
     script:
       - "python ../util/merge_collections.py -o merged_output -c ${vars.training_collections}"
-      - "python ../util/output_collection_to_docbin.py ${vars.lang} merged_output corpus/${vars.name}_${vars.lang}_training.spacy"
+      - "python ../util/output_collection_to_docbin.py ${vars.lang} merged_output corpus/${vars.name}_${vars.lang} ${vars.min_training_text_len} ${vars.training_percentage} ${vars.random_seed}"
 
   - name: train-fasttext
     script:

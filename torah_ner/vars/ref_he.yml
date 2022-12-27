@@ -7,3 +7,5 @@ vars:
   # training_collections: "achronim_output webpages_output rishonim_output_silver gilyon_output"
   training_collections: "webpages_output achronim_output gilyon_output:100"
   config: "configs/ref-v3.2.cfg"
+  training_percentage: 0.8
+  min_training_text_len: 20
