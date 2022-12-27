@@ -59,18 +59,18 @@ init-floret-vectors:
 train-fasttext:
   cmd: python -m spacy run train-fasttext
   script:
-    - python scripts/embedding_scripts.py fasttext -d 50 -i corpus/all_text_he.txt
+    - python ../util/embedding_scripts.py fasttext -d 50 -i corpus/all_text_he.txt
       -o vectors/all_text_he.fasttext_50
   deps:
-    - path: scripts/embedding_scripts.py
-      md5: b2fcd20002ce6da4147a5475f9bbe866
+    - path: ../util/embedding_scripts.py
+      md5: 0007fcf8a7b47c647008565432a489c0
     - path: corpus/all_text_he.txt
-      md5: a273c1c58eb11fe66458ad5b286617d1
+      md5: 75beb3bbc63bcb020666c28694543526
   outs:
     - path: vectors/all_text_he.fasttext_50.bin
-      md5: 2800fbcc8e87ea23c989e013c6b66337
+      md5: d4aa673e7fcd14e8a5b4edd1f2d6deb0
     - path: vectors/all_text_he.fasttext_50.vec
-      md5: 063eb69bb5ba2c842bca5854765dff70
+      md5: dfc1f9d61d3a20fdd9583b4c167ac0de
   spacy_version: 3.4.1
   spacy_git_version: Unknown
 init-fasttext-vectors:
@@ -79,10 +79,10 @@ init-fasttext-vectors:
     - python -m spacy init vectors he vectors/all_text_he.fasttext_50.vec vectors/all_text_he_fasttext_model_50
   deps:
     - path: vectors/all_text_he.fasttext_50.vec
-      md5: 063eb69bb5ba2c842bca5854765dff70
+      md5: dfc1f9d61d3a20fdd9583b4c167ac0de
   outs:
     - path: vectors/all_text_he_fasttext_model_50
-      md5: 720eda37fb53a7cf20c80271b3a87d36
+      md5: fd0e24dd04c1587a2fcdd5f54b4ed8aa
   spacy_version: 3.4.1
   spacy_git_version: Unknown
 pretrain:
