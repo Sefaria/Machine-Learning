@@ -13,6 +13,11 @@ To install, follow instructions in `prodigy/prodigy_utils/README.txt`.
 
 Run: `pip install -r requirements.txt`
 
+#### DVC
+
+This repo uses DVC to track changes to large data files or models. DVC is installed using `requirements.txt`. However, you can follow [these instructions](https://dvc.org/doc/install/completion) to install shell completion as well.
+
+
 ## Run
 
 Most scripts in this repo are run using spaCy projects. See [here](https://spacy.io/usage/projects) for general documentation on spaCy projects.
