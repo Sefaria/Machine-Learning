@@ -173,3 +173,11 @@ train-blank-pretrained-model:
       md5: 1c72c5ac3459f07fecebb1f6e318d28d
   spacy_version: 3.2.3
   spacy_git_version: 99425de36
+echo:
+  cmd: python -m spacy run echo
+  script:
+    - echo BLAHconfigs/ref-v3.2.cfg
+  deps: []
+  outs: []
+  spacy_version: 3.4.1
+  spacy_git_version: 5c2a00cef
