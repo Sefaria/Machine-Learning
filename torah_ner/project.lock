@@ -193,3 +193,23 @@ export-training-data:
   outs: []
   spacy_version: 3.4.1
   spacy_git_version: Unknown
+train-ner:
+  cmd: python -m spacy run train-ner
+  script:
+    - python ../util/merge_collections.py -o merged_output -c webpages_output achronim_output
+      gilyon_output:100
+    - python -m spacy train configs/ref-v3.2.cfg --output models/ref_he --paths.vectors
+      vectors/all_text_he_fasttext_model_50 --paths.train corpus/ref_he_train.spacy
+      --paths.dev corpus/ref_he_test.spacy --nlp.lang he --paths.init_tok2vec models/pretrain_ref_he_50/model8.bin
+      --pretraining.objective.hidden_size 50 --code ../util/spacy_registry.py --gpu-id
+      0
+  deps:
+    - path: configs/ref-v3.2.cfg
+      md5: 99397b7951bf5899d0727e7ceb8b0d22
+    - path: models/pretrain_ref_he_50
+      md5: 3fb6a72afdc574c03b0d2b760b7133ba
+  outs:
+    - path: models/ref_he
+      md5: d009cf2fec81a290ce8cc67464968abb
+  spacy_version: 3.4.1
+  spacy_git_version: Unknown
