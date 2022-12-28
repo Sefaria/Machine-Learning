@@ -90,16 +90,16 @@ pretrain:
   script:
     - python -m spacy pretrain configs/ref-v3.2.cfg models/pretrain_ref_he_50 --paths.vectors
       vectors/all_text_he_fasttext_model_50 --paths.raw_text corpus/all_text_he.jsonl
-      --paths.input_collection ner_output --nlp.lang he --pretraining.objective.hidden_size
-      50 --code ../util/spacy_registry.py --gpu-id 0
+      --nlp.lang he --pretraining.objective.hidden_size 50 --code ../util/spacy_registry.py
+      --gpu-id 0
   deps:
     - path: configs/ref-v3.2.cfg
-      md5: f62d689b0d64178a964cb7ea0a7ce70f
+      md5: 99397b7951bf5899d0727e7ceb8b0d22
     - path: vectors/all_text_he_fasttext_model_50
-      md5: 720eda37fb53a7cf20c80271b3a87d36
+      md5: fd0e24dd04c1587a2fcdd5f54b4ed8aa
   outs:
     - path: models/pretrain_ref_he_50
-      md5: 4d475afed63b1542674dc234fe282890
+      md5: 3fb6a72afdc574c03b0d2b760b7133ba
   spacy_version: 3.4.1
   spacy_git_version: Unknown
 train-ref-model:
