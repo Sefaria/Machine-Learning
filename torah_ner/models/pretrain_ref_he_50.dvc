@@ -1,0 +1,5 @@
+outs:
+- md5: c2bb183ae24fdbdaacc05215a293ccc2.dir
+  size: 390550160
+  nfiles: 11
+  path: pretrain_ref_he_50
