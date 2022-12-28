@@ -11,16 +11,16 @@ download-sefaria-dump:
 export-library:
   cmd: python -m spacy run export-library
   script:
-    - python ../util/library_exporter.py he -f both -w ../web_scraper/output -o corpus/all_text_he
+    - python ../util/library_exporter.py en -f both -w ../web_scraper/output -o corpus/all_text_en
       -s
   deps:
     - path: ../util/restore_db.sh
       md5: 5cafcd94fb535ddb8a8c93def7173a16
   outs:
-    - path: corpus/all_text_he.txt
-      md5: 75beb3bbc63bcb020666c28694543526
-    - path: corpus/all_text_he.jsonl
-      md5: 2aac7b28ab7c6817824b2dd75ab73283
+    - path: corpus/all_text_en.txt
+      md5: 0d87b5dcff3a0b968687f068d144de56
+    - path: corpus/all_text_en.jsonl
+      md5: 560e772293c1318c335660e3e4877fbf
   spacy_version: 3.4.1
   spacy_git_version: Unknown
 train-floret:
@@ -185,10 +185,10 @@ echo:
 export-training-data:
   cmd: python -m spacy run export-training-data
   script:
-    - python ../util/merge_collections.py -o merged_output -c webpages_output achronim_output
-      gilyon_output:100
-    - python ../util/output_collection_to_docbin.py he merged_output corpus/ref_he
-      20 0.8 61
+    - python ../util/merge_collections.py -o merged_output -c webpages_sub_citation_output
+      gilyon_sub_citation_output
+    - python ../util/output_collection_to_docbin.py he merged_output corpus/ref_subref_he
+      0 0.8 61
   deps: []
   outs: []
   spacy_version: 3.4.1
