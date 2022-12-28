@@ -16,6 +16,7 @@ vars:
   min_training_text_len: 20
   training_percentage: 0.8
   random_seed: 61  # determined to be sufficiently random
+  training_input_type: ""
 
 
 # These are the directories that the project needs. The project CLI will make
@@ -57,7 +58,7 @@ commands:
   - name: export-training-data
     script:
       - "python ../util/merge_collections.py -o merged_output -c ${vars.training_collections}"
-      - "python ../util/output_collection_to_docbin.py ${vars.lang} merged_output corpus/${vars.name}_${vars.lang} ${vars.min_training_text_len} ${vars.training_percentage} ${vars.random_seed}"
+      - "python ../util/output_collection_to_docbin.py ${vars.lang} merged_output corpus/${vars.name}_${vars.lang} ${vars.min_training_text_len} ${vars.training_percentage} ${vars.random_seed} ${vars.training_input_type}"
 
   - name: train-fasttext
     script:
