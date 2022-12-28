@@ -5,7 +5,7 @@ spacy_version: ">=3.2.0,<4.0.0"
 vars:
   name: "ner"
   lang: "he"
-  training_collections: ""
+  training_input: ""
   config: ""
   annotator_pod: "annotator-bodum-0"
   webpages_dir: "../web_scraper/output"
@@ -57,7 +57,7 @@ commands:
 
   - name: export-training-data
     script:
-      - "python ../util/merge_collections.py -o merged_output -c ${vars.training_collections}"
+      - "python ../util/merge_collections.py -o merged_output -c ${vars.training_input}"
       - "python ../util/output_collection_to_docbin.py ${vars.lang} merged_output corpus/${vars.name}_${vars.lang} ${vars.min_training_text_len} ${vars.training_percentage} ${vars.random_seed} ${vars.training_input_type}"
 
   - name: train-fasttext
@@ -83,7 +83,7 @@ commands:
 
   - name: "train-ner-model"
     script:
-      - "python ../util/merge_collections.py -o merged_output -c ${vars.training_collections}"
+      - "python ../util/merge_collections.py -o merged_output -c ${vars.training_input}"
       - "python -m spacy train ${vars.config} --output models/${vars.name}_${vars.lang} --paths.vectors vectors/all_text_${vars.lang}_fasttext_model_${vars.embedding_size} --paths.train corpus/${vars.name}_${vars.lang}_train.spacy --paths.dev corpus/${vars.name}_${vars.lang}_test.spacy --nlp.lang ${vars.lang} --paths.init_tok2vec models/pretrain_ref_${vars.lang}_${vars.embedding_size}/${vars.pretrain_model_name} --pretraining.objective.hidden_size ${vars.embedding_size} --code ../util/spacy_registry.py --gpu-id 0"
     deps:
       - "${vars.config}"
