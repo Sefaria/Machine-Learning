@@ -1,0 +1,4 @@
+outs:
+- md5: 1c6d043e70daca2fc46c0e79be513d97
+  size: 124763795
+  path: all_text_en.fasttext_50.vec

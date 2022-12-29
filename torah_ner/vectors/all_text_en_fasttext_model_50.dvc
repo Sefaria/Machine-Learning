@@ -1,0 +1,5 @@
+outs:
+- md5: 47225d8818d0437e3c301d8bb10469ce.dir
+  size: 52803465
+  nfiles: 8
+  path: all_text_en_fasttext_model_50
