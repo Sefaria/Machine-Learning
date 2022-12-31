@@ -2,3 +2,6 @@
 /all_text_he.txt
 /ref_he_test.spacy
 /ref_he_train.spacy
+/aggregated_ner_train_en.json
+/aggregated_ner_train_he.json
+/ner_mentions.json
