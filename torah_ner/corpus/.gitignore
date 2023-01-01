@@ -6,3 +6,6 @@
 /all_text_en.txt
 /ref_subref_he_test.spacy
 /ref_subref_he_train.spacy
+/aggregated_ner_train_en.json
+/aggregated_ner_train_he.json
+/ner_mentions.json
