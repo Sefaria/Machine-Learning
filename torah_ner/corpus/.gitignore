@@ -2,3 +2,7 @@
 /all_text_he.txt
 /ref_he_test.spacy
 /ref_he_train.spacy
+/all_text_en.jsonl
+/all_text_en.txt
+/ref_subref_he_test.spacy
+/ref_subref_he_train.spacy

@@ -1,5 +1,4 @@
 description: "variables for training NER model for recognizing citations"
-sup: "yoyo"
 vars:
   name: "ref"
   lang: "he"

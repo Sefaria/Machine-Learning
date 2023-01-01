@@ -1,0 +1,4 @@
+outs:
+- md5: 8cadb0779d42fb803badbb8d4d87e240
+  size: 491611097
+  path: all_text_en.fasttext_50.bin

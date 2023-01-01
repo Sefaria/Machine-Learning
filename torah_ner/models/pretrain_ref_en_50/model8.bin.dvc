@@ -1,0 +1,4 @@
+outs:
+- md5: b3ed426eced32cd53aa539545da4fb10
+  size: 43394001
+  path: model8.bin

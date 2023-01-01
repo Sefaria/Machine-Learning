@@ -11,16 +11,16 @@ download-sefaria-dump:
 export-library:
   cmd: python -m spacy run export-library
   script:
-    - python ../util/library_exporter.py he -f both -w ../web_scraper/output -o corpus/all_text_he
+    - python ../util/library_exporter.py en -f both -w ../web_scraper/output -o corpus/all_text_en
       -s
   deps:
     - path: ../util/restore_db.sh
       md5: 5cafcd94fb535ddb8a8c93def7173a16
   outs:
-    - path: corpus/all_text_he.txt
-      md5: 75beb3bbc63bcb020666c28694543526
-    - path: corpus/all_text_he.jsonl
-      md5: 2aac7b28ab7c6817824b2dd75ab73283
+    - path: corpus/all_text_en.txt
+      md5: 0d87b5dcff3a0b968687f068d144de56
+    - path: corpus/all_text_en.jsonl
+      md5: 560e772293c1318c335660e3e4877fbf
   spacy_version: 3.4.1
   spacy_git_version: Unknown
 train-floret:
@@ -59,18 +59,21 @@ init-floret-vectors:
 train-fasttext:
   cmd: python -m spacy run train-fasttext
   script:
-    - python ../util/embedding_scripts.py fasttext -d 50 -i corpus/all_text_he.txt
-      -o vectors/all_text_he.fasttext_50
+    - python ../util/embedding_scripts.py fasttext -d 50 -i corpus/all_text_en.txt
+      -o vectors/all_text_en.fasttext_50
+    - python -m spacy init vectors en vectors/all_text_en.fasttext_50.vec vectors/all_text_en_fasttext_model_50
   deps:
     - path: ../util/embedding_scripts.py
       md5: 0007fcf8a7b47c647008565432a489c0
-    - path: corpus/all_text_he.txt
-      md5: 75beb3bbc63bcb020666c28694543526
+    - path: corpus/all_text_en.txt
+      md5: 0d87b5dcff3a0b968687f068d144de56
   outs:
-    - path: vectors/all_text_he.fasttext_50.bin
-      md5: d4aa673e7fcd14e8a5b4edd1f2d6deb0
-    - path: vectors/all_text_he.fasttext_50.vec
-      md5: dfc1f9d61d3a20fdd9583b4c167ac0de
+    - path: vectors/all_text_en.fasttext_50.bin
+      md5: 8cadb0779d42fb803badbb8d4d87e240
+    - path: vectors/all_text_en.fasttext_50.vec
+      md5: 1c6d043e70daca2fc46c0e79be513d97
+    - path: vectors/all_text_en_fasttext_model_50
+      md5: bd607a0aa9456429b49ce551ce1d3314
   spacy_version: 3.4.1
   spacy_git_version: Unknown
 init-fasttext-vectors:
@@ -88,18 +91,18 @@ init-fasttext-vectors:
 pretrain:
   cmd: python -m spacy run pretrain
   script:
-    - python -m spacy pretrain configs/ref-v3.2.cfg models/pretrain_ref_he_50 --paths.vectors
-      vectors/all_text_he_fasttext_model_50 --paths.raw_text corpus/all_text_he.jsonl
-      --nlp.lang he --pretraining.objective.hidden_size 50 --code ../util/spacy_registry.py
+    - python -m spacy pretrain configs/ref-v3.2.cfg models/pretrain_ref_en_50 --paths.vectors
+      vectors/all_text_en_fasttext_model_50 --paths.raw_text corpus/all_text_en.jsonl
+      --nlp.lang en --pretraining.objective.hidden_size 50 --code ../util/spacy_registry.py
       --gpu-id 0
   deps:
     - path: configs/ref-v3.2.cfg
-      md5: 99397b7951bf5899d0727e7ceb8b0d22
-    - path: vectors/all_text_he_fasttext_model_50
-      md5: fd0e24dd04c1587a2fcdd5f54b4ed8aa
+      md5: 55cfd951a5f43e1f7e10d598a195df46
+    - path: vectors/all_text_en_fasttext_model_50
+      md5: bd607a0aa9456429b49ce551ce1d3314
   outs:
-    - path: models/pretrain_ref_he_50
-      md5: 3fb6a72afdc574c03b0d2b760b7133ba
+    - path: models/pretrain_ref_en_50
+      md5: 3d46964a17ef73d806c1bceb304f8ab3
   spacy_version: 3.4.1
   spacy_git_version: Unknown
 train-ref-model:
@@ -185,11 +188,31 @@ echo:
 export-training-data:
   cmd: python -m spacy run export-training-data
   script:
-    - python ../util/merge_collections.py -o merged_output -c webpages_output achronim_output
-      gilyon_output:100
-    - python ../util/output_collection_to_docbin.py he merged_output corpus/ref_he
-      20 0.8 61
+    - python ../util/merge_collections.py -o merged_output -c webpages_sub_citation_output
+      gilyon_sub_citation_output
+    - python ../util/output_collection_to_docbin.py he merged_output corpus/ref_subref_he
+      0 0.8 61
   deps: []
   outs: []
+  spacy_version: 3.4.1
+  spacy_git_version: Unknown
+train-ner:
+  cmd: python -m spacy run train-ner
+  script:
+    - python ../util/merge_collections.py -o merged_output -c webpages_output achronim_output
+      gilyon_output:100
+    - python -m spacy train configs/ref-v3.2.cfg --output models/ref_he --paths.vectors
+      vectors/all_text_he_fasttext_model_50 --paths.train corpus/ref_he_train.spacy
+      --paths.dev corpus/ref_he_test.spacy --nlp.lang he --paths.init_tok2vec models/pretrain_ref_he_50/model8.bin
+      --pretraining.objective.hidden_size 50 --code ../util/spacy_registry.py --gpu-id
+      0
+  deps:
+    - path: configs/ref-v3.2.cfg
+      md5: 99397b7951bf5899d0727e7ceb8b0d22
+    - path: models/pretrain_ref_he_50
+      md5: 3fb6a72afdc574c03b0d2b760b7133ba
+  outs:
+    - path: models/ref_he
+      md5: d009cf2fec81a290ce8cc67464968abb
   spacy_version: 3.4.1
   spacy_git_version: Unknown
