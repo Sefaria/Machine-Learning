@@ -9,12 +9,7 @@ from pymongo import InsertOne
 from sefaria.model import *
 from functools import reduce
 from tqdm import tqdm
-from spacy.lang.en import English
-from prodigy.functions import stream_data, get_corpus_data
-from spacy.lang.he import Hebrew
-from prodigy.functions import stream_data
-from util.spacy_registry import inner_punct_tokenizer_factory
-from db_manager import MongoProdigyDBManager
+from prodigy_scripts.functions import stream_data, get_corpus_data
 
 def id_to_gen(_id):
     if _id is None:

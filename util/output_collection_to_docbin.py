@@ -3,7 +3,7 @@ import typer
 import json
 from typing import List
 from library_exporter import create_nlp
-from prodigy.functions import get_mongo_docs, get_train_test_data
+from prodigy_scripts.functions import get_mongo_docs, get_train_test_data
 
 
 def output_mongo_docs(mongo_docs: List[dict], lang: str, output_file: str) -> None:
