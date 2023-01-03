@@ -8,10 +8,11 @@ import spacy
 from sklearn.model_selection import train_test_split
 from spacy.training import Example
 from spacy.language import Language
-from db_manager import MongoProdigyDBManager
 
 
 def get_mongo_docs(min_training_text_len, unique_by_metadata=True, *db_manager_args) -> List[dict]:
+    from db_manager import MongoProdigyDBManager
+
     my_db = MongoProdigyDBManager(*db_manager_args)
     data = [d for d in my_db.output_collection.find({}) if len(d['text']) > min_training_text_len]
     # make data unique
