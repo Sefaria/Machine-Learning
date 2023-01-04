@@ -9,3 +9,5 @@
 /aggregated_ner_train_en.json
 /aggregated_ner_train_he.json
 /ner_mentions.json
+/people_en_test.spacy
+/people_en_train.spacy

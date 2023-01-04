@@ -1,0 +1,4 @@
+outs:
+- md5: c19ff2cc37ac981c716d47729d691c2f
+  size: 8043850
+  path: people_en_test.spacy

@@ -216,3 +216,12 @@ train-ner:
       md5: d009cf2fec81a290ce8cc67464968abb
   spacy_version: 3.4.1
   spacy_git_version: Unknown
+export-training-data-from-json:
+  cmd: python -m spacy run export-training-data-from-json
+  script:
+    - python ../util/convert_training_data_to_docbin.py en corpus/aggregated_ner_train_en.json
+      corpus/people_en 20 0.8 61 --input-type json
+  deps: []
+  outs: []
+  spacy_version: 3.4.1
+  spacy_git_version: Unknown
