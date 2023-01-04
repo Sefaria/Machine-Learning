@@ -3,7 +3,7 @@ django.setup()
 from tqdm import tqdm
 from collections import defaultdict
 
-from spacy_registry import inner_punct_tokenizer_factory, get_lang_detect_nlp
+from .spacy_registry import inner_punct_tokenizer_factory, get_lang_detect_nlp
 from spacy.lang.en import English
 from spacy.lang.he import Hebrew
 from sefaria.model import *

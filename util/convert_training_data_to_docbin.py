@@ -8,7 +8,6 @@ from training_utils import get_mongo_docs, get_train_test_data
 
 def output_mongo_docs(mongo_docs: List[dict], lang: str, output_file: str) -> None:
     nlp = create_nlp(lang)
-
     # mostly copied from here https://spacy.io/usage/training#training-data
     doc_bin = DocBin()
     for mongo_doc in mongo_docs:
@@ -17,6 +16,8 @@ def output_mongo_docs(mongo_docs: List[dict], lang: str, output_file: str) -> No
         for raw_span in mongo_doc['spans']:
             span = doc.char_span(raw_span['start'], raw_span['end'], label=raw_span['label'])
             ents.append(span)
+        print("debug print: ents = ")
+        print(ents)
         doc.ents = ents
         doc_bin.add(doc)
     doc_bin.to_disk(output_file)
