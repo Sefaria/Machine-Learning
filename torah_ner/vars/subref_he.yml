@@ -6,4 +6,3 @@ vars:
   config: "configs/subref-v3.2.cfg"
   training_percentage: 0.8
   min_training_text_len: 0
-  training_input_type: "mongo"

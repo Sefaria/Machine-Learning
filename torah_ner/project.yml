@@ -55,10 +55,14 @@ commands:
       - "corpus/all_text_${vars.lang}.txt"
       - "corpus/all_text_${vars.lang}.jsonl"
 
-  - name: export-training-data
+  - name: export-training-data-from-mongo
     script:
-      - '[ "${vars.training_input_type}" = "mongo" ] && python ../util/merge_collections.py -o merged_output -c ${vars.training_input}'
-      - "python ../util/output_collection_to_docbin.py ${vars.lang} merged_output corpus/${vars.name}_${vars.lang} ${vars.min_training_text_len} ${vars.training_percentage} ${vars.random_seed} ${vars.training_input_type}"
+      - "python ../util/merge_collections.py -o merged_output -c ${vars.training_input}"
+      - "python ../util/convert_training_data_to_docbin.py ${vars.lang} merged_output corpus/${vars.name}_${vars.lang} ${vars.min_training_text_len} ${vars.training_percentage} ${vars.random_seed} --input-type mongo"
+
+  - name: export-training-data-from-json
+    script:
+      - "python ../util/convert_training_data_to_docbin.py ${vars.lang} ${vars.training_input} corpus/${vars.name}_${vars.lang} ${vars.min_training_text_len} ${vars.training_percentage} ${vars.random_seed} --input-type json"
 
   - name: train-fasttext
     script:
