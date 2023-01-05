@@ -6,3 +6,4 @@ vars:
   config: "configs/ref-v3.2.cfg"
   training_percentage: 0.8
   min_training_text_len: 20
+  pretrain_model_name: "model7.bin"
