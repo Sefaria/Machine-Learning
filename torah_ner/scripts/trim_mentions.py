@@ -4,6 +4,7 @@ django.setup()
 from sefaria.model import *
 from tqdm import tqdm
 import re
+import sys
 
 #
 #
@@ -30,26 +31,27 @@ import re
 if __name__ == "__main__":
     print("hello world")
     # stats
+    files = sys.argv[1:]
+    for file in files:
+        with open(file) as f:
+            mentions = json.load(f)
 
-    with open('aggregated_he.json') as f:
-        mentions = json.load(f)
-
-    trimmed_training = []
-    test = []
+        trimmed_training = []
+        test = []
 
 
-    for mention in tqdm(mentions, desc="trimming mentions"):
-        page_number = re.search(r"\d+", mention['meta']['ref'])
-        if int(page_number.group(0)) < 10:
-            trimmed_training.append(mention)
-        else:
-            test.append(mention)
+        for mention in tqdm(mentions, desc="trimming mentions of " + file ):
+            page_number = re.search(r"\d+", mention['meta']['ref'])
+            if int(page_number.group(0)) < 10:
+                trimmed_training.append(mention)
+            else:
+                test.append(mention)
 
-    #aggregated_list = list(aggregated_dict.values())
+        #aggregated_list = list(aggregated_dict.values())
 
-    with open("trimmed_training_he.json", "w") as f:
-        # Write the list of dictionaries to the file as JSON
-        json.dump(trimmed_training, f, ensure_ascii=False, indent=2)
-    with open("test.json", "w") as f:
-        # Write the list of dictionaries to the file as JSON
-        json.dump(test, f, ensure_ascii=False, indent=2)
+        with open("trimmed_" + file, "w") as f:
+            # Write the list of dictionaries to the file as JSON
+            json.dump(trimmed_training, f, ensure_ascii=False, indent=2)
+        with open("test_" + file, "w") as f:
+            # Write the list of dictionaries to the file as JSON
+            json.dump(test, f, ensure_ascii=False, indent=2)
