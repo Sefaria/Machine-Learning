@@ -4,10 +4,10 @@ setup(
     name='prodigy_utils',
     entry_points={
         'prodigy_recipes': [
-            'ref-tagging-recipe = recipes:ref_tagging_recipe'
+            'ref-tagging-recipe = main:ref_tagging_recipe'
         ],
         'prodigy_db': [
-            'mongodb = db_manager:db_manager'
+            'mongodb = main:db_manager'
         ]
     },
     install_requires=[
