@@ -2,6 +2,7 @@ from setuptools import setup
 
 setup(
     name='prodigy_utils',
+    py_modules=["main"],
     entry_points={
         'prodigy_recipes': [
             'ref-tagging-recipe = main:ref_tagging_recipe'
