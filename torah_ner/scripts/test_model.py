@@ -74,8 +74,9 @@ if __name__ == "__main__":
     eval = []
     num_of_test_mentions = 0
 
-    test_mentions_file = sys.argv[1]
-    nlp = spacy.load('../models/people_en/model-best')
+    model_file = sys.argv[1]
+    test_mentions_file = sys.argv[2]
+    nlp = spacy.load(model_file)
     with open(test_mentions_file) as f:
         test_segments = json.load(f)
 
