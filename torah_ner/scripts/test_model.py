@@ -68,9 +68,9 @@ def is_mishna(mention):
 if __name__ == "__main__":
     print("hello world")
     # stats
+    i = 0
 
-    predicted_spans = []
-    truth_spans = []
+    problematic = []
     eval = []
     num_of_test_mentions = 0
 
@@ -81,23 +81,46 @@ if __name__ == "__main__":
         test_segments = json.load(f)
 
     for segment in tqdm(test_segments):
+        # i += 1
+        # if i >= 1000:
+        #     break
         text = segment["text"]
-        # print(text)
         prediction = nlp(text)
-        # print(prediction)
-        a = prediction.spans
-        predicted = []
         test_spans_for_segment = set()
         predicted_spans_for_segment = set()
+
+        pred_ents = set()
+        test_ents = set()
         for span in segment["spans"]:
             # keys_to_extract = ['start', 'end']
             test_spans_for_segment.add((span["token_start"], span["token_end"]))
+            test_ents.add(segment['text'][span['start']:span['end']])
             num_of_test_mentions += 1
         for ent in prediction.ents:
             # spans = {'start': ent.start, 'end' : ent.end}
             predicted_spans_for_segment.add((ent.start, ent.end-1))
+            pred_ents.add(ent.text)
+
+            prediction
 
         eval.append(len(test_spans_for_segment.intersection(predicted_spans_for_segment)))
 
+        if test_spans_for_segment != predicted_spans_for_segment:
+            # 
+            # #highlight model:
+            # for token in segment["text"]:
+            #     if start <= token.i <= end:
+            #         highlighted_text_predicted += "**" + str(token) + "** "
+            #     else:
+            #         highlighted_text_predicted += str(token) + " "
+
+            problematic.append({'text': segment['text'], "predicted spans": list(predicted_spans_for_segment.difference(test_spans_for_segment)),
+                                'test spans': list(test_spans_for_segment.difference(predicted_spans_for_segment)),
+                               'predicted ents': list(pred_ents.difference(test_ents)),
+                                'test ents': list(test_ents.difference(pred_ents))})
+
+    with open("model_errors.json", "w") as f:
+        # Write the list of dictionaries to the file as JSON
+        json.dump(problematic, f, ensure_ascii=False, indent=2)
 
     print("Accuracy: ", sum(eval)/num_of_test_mentions)
