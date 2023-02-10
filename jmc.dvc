@@ -1,0 +1,5 @@
+outs:
+- md5: fde6b5154ec615623b5a3fc8bc592e47.dir
+  size: 3269961325
+  nfiles: 32
+  path: jmc
