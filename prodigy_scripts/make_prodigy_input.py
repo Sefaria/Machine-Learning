@@ -269,7 +269,7 @@ if __name__ == "__main__":
     prev_tagged_refs = set()  # get_prev_tagged_refs('webpages_output')
     # title_list = [i.title for i in IndexSet({"title": re.compile(r'Gilyon HaShas on')})]
     # print(title_list)
-    make_random_prodigy_input('en', prev_tagged_refs, 'ner_en_input', max_length=1500)
+    make_random_prodigy_input('he', prev_tagged_refs, 'he_interview_eval', max_length=1500)
     # make_prodigy_input(title_list, [None]*len(title_list), ['en']*len(title_list), prev_tagged_refs, 'ner_en_input')
     #make_prodigy_input_webpages(3000, prev_tagged_refs)
     # combine_all_sentences_to_paragraphs()
