@@ -3,4 +3,3 @@ mongodb = main:db_manager
 
 [prodigy_recipes]
 ref-tagging-recipe = main:ref_tagging_recipe
-

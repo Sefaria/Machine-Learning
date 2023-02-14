@@ -1,4 +1,5 @@
 README.txt
+main.py
 setup.py
 prodigy_utils.egg-info/PKG-INFO
 prodigy_utils.egg-info/SOURCES.txt
