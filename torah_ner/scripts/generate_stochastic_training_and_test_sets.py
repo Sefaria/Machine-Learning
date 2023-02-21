@@ -40,13 +40,6 @@ def stochastic_selection(p):
 
 def compute_priors(mentions_list):
     bavli_count, yerushalmi_count, mishna_count = count_mention_types(mentions_list)
-    for par in mentions_list:
-        if is_bavli(par):
-            bavli_count+=1
-        elif is_yerushalmi(par):
-            yerushalmi_count+=1
-        elif is_mishna(par):
-            mishna_count+=1
     all_count = bavli_count+yerushalmi_count+mishna_count
     return bavli_count/all_count, yerushalmi_count/all_count, mishna_count/all_count
 
@@ -94,7 +87,7 @@ if __name__ == "__main__":
         p_yerushalmi = (portion_of_data * q_yerushalmi) / prior_yerushalmi
         p_mishna = (portion_of_data * q_mishna) / prior_mishna
 
-        minimum_portion = 1 / max(q_bavli/prior_bavli, q_yerushalmi/prior_yerushalmi, q_mishna/prior_mishna)
+        max_portion = 1 / max(q_bavli/prior_bavli, q_yerushalmi/prior_yerushalmi, q_mishna/prior_mishna)
 
 
         for item in data:
@@ -116,7 +109,7 @@ if __name__ == "__main__":
     print("yerushalmi training refs: " + str(yerushalmi_count))
     print("mishna training refs: " + str(mishna_count))
     print("all training refs: " + str(bavli_count+yerushalmi_count+mishna_count))
-    print("minimum possible 'portion' of all data: " + str(minimum_portion))
+    print("max possible 'portion' of all data: " + str(max_portion))
 
 
     with open('generated_training_set.json', 'w') as f:
