@@ -13,3 +13,7 @@
 /people_en_train.spacy
 /people_he_test.spacy
 /people_he_train.spacy
+/stochastic_training_ner_he.json
+/stochastic_training_ner_en.json
+/stochastic_test_set_ner_en.json
+/stochastic_test_set_ner_he.json
