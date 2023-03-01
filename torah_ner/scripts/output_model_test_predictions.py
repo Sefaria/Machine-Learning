@@ -12,7 +12,6 @@ import sys
 import spacy
 
 
-
 def is_bavli(mention):
     if "Mishnah" not in mention['meta']['ref'] and "Jerusalem" not in mention['meta']['ref']:
         return True
@@ -81,17 +80,32 @@ def create_html_table(data):
 
     return html_table
 
+def wrap_html(inner_html):
+    if '_he' in test_mentions_file:
+        return '<html lang="he"> <body style="font-size: 16px; padding: 4rem 2rem; direction: rtl">{}</html>'.format(inner_html)
+    else:
+        return '<html lang="en"> <body style="font-size: 16px; padding: 4rem 2rem;">{}</html>'.format(inner_html)
+
+def instantiate_patterns(file_name):
+    global basic_par_pattern
+    if "_he" in file_name:
+        basic_par_pattern = '<figure style="margin-bottom: 6rem"><div class="entities" style="line-height: 2.5; direction: rtl">{}</figure>'
+    else:
+        basic_par_pattern = '<figure style="margin-bottom: 6rem"><div class="entities" style="line-height: 2.5; direction: ltr">{}</figure>'
+
+
+
 
 if __name__ == "__main__":
     # print("hello world")
-
     test_mentions_file = sys.argv[1]
     model_path = sys.argv[2]
-    
+    instantiate_patterns(test_mentions_file)
+
     comparison_table = []
     comparison_table.append( ("Ref", "Old Model - Rulebased", "New Model - Machine Learning") )
 
-    nlp = spacy.load('../models/people_en/model-best')
+    nlp = spacy.load(model_path)
     with open(test_mentions_file) as f:
         segments = json.load(f)
 
