@@ -113,6 +113,7 @@ def export_tagged_data_as_html(tagged_data, output_folder, is_binary=True, start
             "fn": [],
             "ref": example.predicted.user_data['Ref'],
             "_id": example.predicted.user_data['_id'],
+            "answer": example.predicted.user_data.get('answer', "accept"),
         }
         if is_binary:
             assert len(ents_x2y) == 1
@@ -187,6 +188,8 @@ def make_evaluation_html(data, output_folder, output_filename, lang='he'):
         .fp { background-color: pink; border: 5px lightgreen solid; }
         .fn { background-color: greenyellow; border: 5px pink solid; }
         .label { font-weight: bold; font-size: 75%; color: #666; padding-right: 5px; }
+        .answer-reject { background-color: pink; }
+        .answer-accept { background-color: greenyellow; }
         </style>
       </head>
       <body>
@@ -203,7 +206,7 @@ def make_evaluation_html(data, output_folder, output_filename, lang='he'):
         chars_to_wrap += [(s, e, {"label": l, "true condition": 'fn'}) for (s, e, l) in d['fn']]
         wrapped_text = wrap_chars_with_overlaps(d['text'], chars_to_wrap, get_wrapped_text)
         html += f"""
-        <p class="ref">{i}) {d['ref']} - ID: {d['_id']}</p>
+        <p class="ref answer-{d['answer']}">{i}) {d['ref']} - ID: {d['_id']}</p>
         <p dir="{'rtl' if lang == 'he' else 'ltr'}" class="doc">{wrapped_text}</p>
         """
     html += """
@@ -269,14 +272,14 @@ if __name__ == "__main__":
     # nlp = spacy.load('./output/yerushalmi_refs/model-last')
     # nlp = spacy.load('./output/webpages/model-last')
     # nlp = spacy.load('/home/nss/sefaria/ML/linker/models/webpages_he_achronim/model-last')
-    nlp = spacy.load('/home/nss/sefaria/ML/linker/models/ner_he/model-last')
-    # nlp = English()
+    # nlp = spacy.load('/home/nss/sefaria/ML/linker/models/ner_he/model-last')
+    nlp = English()
     # nlp.tokenizer = inner_punct_tokenizer_factory()(nlp)
     # data = stream_data('localhost', 27017, 'merged_output', 'gilyon_input', 61, 0.5, 'test', 20)(nlp)
     # print(make_evaluation_files(data, nlp, './temp', lang='he', only_errors=False))
 
-    data = stream_data('localhost', 27017, 'ner_he_output', 'gilyon_input', 61, 0.5, 'test', 20, unique_by_metadata=True)(nlp)
-    export_tagged_data_as_html(data, './output/evaluation_results', is_binary=False, start=0, lang='he')
+    data = stream_data('localhost', 27017, 'webpages_en_output', -1, 0.5, 'test', 20, include_reject=True, unique_by_metadata=True)(nlp)
+    export_tagged_data_as_html(data, './output/evaluation_results', is_binary=False, start=0, lang='en')
     # convert_jsonl_to_json('./output/evaluation_results/doc_evaluation.jsonl')
     # convert_jsonl_to_csv('./output/evaluation_results/doc_evaluation.jsonl')
     # spacy.training.offsets_to_biluo_tags(doc, entities)
