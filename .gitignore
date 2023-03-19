@@ -2,9 +2,9 @@
 dump_small.tar.gz
 .idea/
 prodigy/temp/
+jmc/output
 web_scraper/output
 web_scraper/urls.txt
 prodigy/output
 .DS_Store
 __pycache__
-/jmc
