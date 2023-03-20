@@ -1,6 +1,5 @@
 import spacy, re
 from spacy.tokenizer import Tokenizer
-from db_manager import MongoProdigyDBManager
 from sklearn.model_selection import train_test_split
 from spacy.training import Example
 from spacy.language import Language
@@ -24,6 +23,8 @@ def inner_punct_tokenizer_factory():
 
 @spacy.registry.readers("mongo_reader")
 def stream_data(db_host: str, db_port: int, input_collection: str, output_collection: str, random_state: int, train_perc: float, corpus_type: str, min_len: int, unique_by_metadata=True) -> Callable[[Language], Iterator[Example]]:
+    from db_manager import MongoProdigyDBManager
+
     my_db = MongoProdigyDBManager(output_collection, db_host, db_port)
     data = [d for d in getattr(my_db.db, input_collection).find({}) if len(d['text']) > min_len]
     # make data unique

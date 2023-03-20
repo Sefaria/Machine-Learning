@@ -1,10 +1,10 @@
 */corpus/dump/
 dump_small.tar.gz
 .idea/
-prodigy/temp/
 web_scraper/output
 web_scraper/urls.txt
-prodigy/output
+prodigy_scripts/output
+prodigy_scripts/temp/
 .DS_Store
 __pycache__
 /jmc

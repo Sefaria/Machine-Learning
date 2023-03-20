@@ -1,0 +1,4 @@
+outs:
+- md5: 755cf7908270d697ee493b9ebc80f280
+  size: 43394001
+  path: model7.bin
