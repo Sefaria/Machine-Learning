@@ -1,0 +1,7 @@
+description: "variables for training NER model for recognizing citations"
+vars:
+  name: "ref"
+  lang: "en"
+  config: "configs/ref-v3.2.cfg"
+  training_percentage: 0.8
+  min_training_text_len: 20

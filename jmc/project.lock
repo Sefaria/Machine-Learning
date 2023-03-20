@@ -1,0 +1,29 @@
+train-fasttext:
+  cmd: python -m spacy run train-fasttext
+  script:
+    - python ../util/embedding_scripts.py fasttext -d 50 -i corpus/all_text_en.txt
+      -o vectors/all_text_en.fasttext_50
+  deps:
+    - path: ../util/embedding_scripts.py
+      md5: 0007fcf8a7b47c647008565432a489c0
+    - path: corpus/all_text_en.txt
+      md5: 30c00807bd711020e0e2b3baa174ff9f
+  outs:
+    - path: vectors/all_text_en.fasttext_50.bin
+      md5: a441ef4750819370c06060a0f5b3c7a0
+    - path: vectors/all_text_en.fasttext_50.vec
+      md5: 88f3a0c56bf210d26d9b521e997f6a8b
+  spacy_version: 3.4.1
+  spacy_git_version: 5c2a00cef
+init-fasttext-vectors:
+  cmd: python -m spacy run init-fasttext-vectors
+  script:
+    - python -m spacy init vectors en vectors/all_text_en.fasttext_50.vec vectors/all_text_en_fasttext_model_50
+  deps:
+    - path: vectors/all_text_en.fasttext_50.vec
+      md5: 88f3a0c56bf210d26d9b521e997f6a8b
+  outs:
+    - path: vectors/all_text_en_fasttext_model_50
+      md5: c5eec3ff0d2425d4af49cb09c6a674d8
+  spacy_version: 3.4.1
+  spacy_git_version: 5c2a00cef

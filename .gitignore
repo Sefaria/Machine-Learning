@@ -1,10 +1,11 @@
 */corpus/dump/
 dump_small.tar.gz
 .idea/
+prodigy/temp/
+jmc/output
 web_scraper/output
 web_scraper/urls.txt
 prodigy_scripts/output
 prodigy_scripts/temp/
 .DS_Store
 __pycache__
-/jmc

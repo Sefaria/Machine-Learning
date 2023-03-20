@@ -1,0 +1,32 @@
+machine learning notes:
+add topic?:
+mode of appointment of the judges
+constitutional apportionment
+liberty of the press
+original jurisdiction
+power of pardon
+power of remission of fines, penalties, and forfeitures
+sweeping clause
+power of establishing post-roads
+power of prohibiting the importation of slaves
+clause on the subject of impeachments
+
+
+
+Remove:
+Act which prohibited the importation of them in 1778
+third article the judicial power is vested in one Supreme Court
+Resolution, defining the powers of Congs
+bills of rights a clause
+principal clauses of the English law respecting descent
+rules of suffrage in the 2 branches
+clause respecting the negative on State laws
+26. In the treaty between the United States and the Republic cf Colombia
+Cherokees in their petition to Congress, [ December 18, 1829
+resolution which the Americans took of temporarily abandoning the use of tea
+the clause requiring three fourths of each House to overrule the negative of the President
+Dickenson's motion for making Executive removeable by Natl. Legislature
+
+
+cd util
+python ./run_project_with_vars.py jmc ref_en.yml train-ref-model
