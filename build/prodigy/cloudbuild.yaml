@@ -27,14 +27,14 @@ steps:
     id: prodigy_ipaddress
 
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    args: ['gsutil', 'cp', 'gs://${_SEFARIA_BUILD_ARTIFACT_REPO}/prodigy/${_PRODIGY_WHEEL_FILENAME}', './prodigy_scripts/${_PRODIGY_WHEEL_FILENAME}']
+    args: ['gsutil', 'cp', 'gs://${_SEFARIA_BUILD_ARTIFACT_REPO}/prodigy/${_PRODIGY_WHEEL_FILENAME}', './prodigy/${_PRODIGY_WHEEL_FILENAME}']
     id: retrieve_prodigy_binary
 
   - name: gcr.io/kaniko-project/executor:latest
     args:
       - --destination=gcr.io/$PROJECT_ID/prodigy-annotator:$BUILD_ID
       - --destination=gcr.io/$PROJECT_ID/prodigy-annotator:latest
-      - --cache=true
+      - --cache=false
       - --dockerfile=build/prodigy/Dockerfile
       - --context=dir://.
     id: build_prodigy_container
