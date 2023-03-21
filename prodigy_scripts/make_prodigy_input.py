@@ -161,36 +161,20 @@ def num_english_chars(s, perc=True):
     return num
 
 
-def make_prodigy_input_webpages(n, prev_tagged_refs=None):
-    prev_tagged_refs = prev_tagged_refs or []
-    LOC = "/Users/nss/sefaria/datasets/webpages"
+def make_prodigy_input_webpages(n, lang, collection, prev_tagged_urls=None):
+    from util.webpages_util import walk_all_webpages
+    prev_tagged_urls = set(prev_tagged_urls) or set()
     walker = ProdigyInputWalker()
     nchosen = 0
-    for (dirpath, dirnames, filenames) in walk(path.join(LOC, 'he')):
-        for filename in tqdm(filenames, total=2*n):  # total is approximate
-            chosen = random.choice([True, False])
-            if nchosen >= n: break
-            nchosen += int(chosen)
-            with open(path.join(dirpath, filename), 'r') as fin:
-                url = None
-                for iline, line in enumerate(fin):
-                    line = " ".join(re.split(r'\s+', line)).strip()
-                    if iline == 0:
-                        url = line
-                        print('hi', url)
-                        continue
-                    if url in prev_tagged_refs:
-                        print(url)
-                        nchosen -= 1
-                        continue
-                    if num_english_chars(line) > 0.5:
-                        continue
-                    if iline >= 2 and not chosen:
-                        # always include title. only include content if chosen
-                        continue
-                    walker.prodigyInput += walker.get_input(line, url, 'he')
+    for webpage in walk_all_webpages("../web_scraper/output", lang):
+        if not webpage.has_real_data() or webpage.url in prev_tagged_urls:
+            continue
+        chosen = random.choice([True, False])
+        if nchosen >= n: break
+        nchosen += int(chosen)
+        walker.prodigyInput += walker.get_input(webpage.get_text(), webpage.url, lang)
     random.shuffle(walker.prodigyInput)
-    srsly.write_jsonl('data/test_input.jsonl', walker.prodigyInput)
+    import_data_to_collection(walker.prodigyInput, collection)
 
 
 def combine_sentences_to_paragraph(sentences):
@@ -269,8 +253,8 @@ if __name__ == "__main__":
     prev_tagged_refs = set()  # get_prev_tagged_refs('webpages_output')
     # title_list = [i.title for i in IndexSet({"title": re.compile(r'Gilyon HaShas on')})]
     # print(title_list)
-    make_random_prodigy_input('he', prev_tagged_refs, 'he_interview_eval', max_length=1500)
+    # make_random_prodigy_input('en', prev_tagged_refs, 'ner_en_input', max_length=1500)
     # make_prodigy_input(title_list, [None]*len(title_list), ['en']*len(title_list), prev_tagged_refs, 'ner_en_input')
-    #make_prodigy_input_webpages(3000, prev_tagged_refs)
+    make_prodigy_input_webpages(3000, "en", "webpages_en_input", prev_tagged_refs)
     # combine_all_sentences_to_paragraphs()
     # make_prodigy_input_sub_citation('webpages_output', 'webpages_sub_citation_input2')
