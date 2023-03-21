@@ -11,6 +11,8 @@ WORKDIR /home/prodigy
 COPY ./prodigy_scripts/* ./
 RUN mkdir ./prodigy_utils
 COPY ./prodigy_scripts/prodigy_utils/* ./prodigy_utils/
+RUN mkdir ./util
+COPY ./util/* ./util/
 RUN pip3 install ./prodigy*.whl
 
 COPY build/prodigy/requirements.txt ./
