@@ -4,8 +4,8 @@
 
 FROM gcr.io/production-deployment/base-web:latest
 
-ENV PRODIGY_HOME=/home/prodigy_scripts
-WORKDIR /home/prodigy_scripts
+ENV PRODIGY_HOME=/home/prodigy
+WORKDIR /home/prodigy
 
 # Expects the Prodigy python wheel to exist at ./researchprodigy/*
 COPY ./prodigy_scripts/* ./
@@ -13,7 +13,7 @@ RUN mkdir ./prodigy_utils
 COPY ./prodigy_scripts/prodigy_utils/* ./prodigy_utils/
 RUN pip3 install ./prodigy*.whl
 
-COPY build/prodigy_scripts/requirements.txt ./
+COPY build/prodigy/requirements.txt ./
 RUN pip3 install -r ./requirements.txt
 
 RUN python -m nltk.downloader punkt
