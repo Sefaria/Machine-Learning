@@ -5,6 +5,7 @@
 FROM gcr.io/production-deployment/base-web:latest
 
 ENV PRODIGY_HOME=/home/prodigy
+ENV PYTHONPATH "${PYTHONPATH}:${PRODIGY_HOME}"
 WORKDIR /home/prodigy
 
 # Expects the Prodigy python wheel to exist at ./researchprodigy/*
