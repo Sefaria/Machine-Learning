@@ -199,18 +199,22 @@ export-training-data:
 train-ner:
   cmd: python -m spacy run train-ner
   script:
-    - 'python -m spacy train configs/ref-v3.2.cfg --output models/people_en --paths.vectors
-      vectors/all_text_en_fasttext_model_50 --paths.train corpus/people_en_train.spacy
-      --paths.dev corpus/people_en_test.spacy --nlp.lang en --paths.init_tok2vec models/pretrain_ref_en_50/model7.bin
+    - 'python -m spacy train configs/ref-v3.2.cfg --output models/ref_en --paths.vectors
+      vectors/all_text_en_fasttext_model_50 --paths.train corpus/ref_en_train.spacy
+      --paths.dev corpus/ref_en_test.spacy --nlp.lang en --paths.init_tok2vec models/pretrain_ref_en_50/model7.bin
       --pretraining.objective.hidden_size 50 --code ../util/spacy_registry.py '
   deps:
     - path: configs/ref-v3.2.cfg
       md5: 55cfd951a5f43e1f7e10d598a195df46
     - path: models/pretrain_ref_en_50
-      md5: 7227f440a4efb7a8d486c85c42b77152
+      md5: 975e027b91687577eb5fdfabd31b6c13
+    - path: corpus/ref_en_train.spacy
+      md5: 9d986777fc63199173b16ab721d7ec6f
+    - path: corpus/ref_en_test.spacy
+      md5: 835457a3d6b53944189339ae954d6204
   outs:
-    - path: models/people_en
-      md5: e86318b1339002bf88c614cbdfae381a
+    - path: models/ref_en
+      md5: 8be3e913d0c208b1d86b82975985733d
   spacy_version: 3.4.1
   spacy_git_version: Unknown
 export-training-data-from-json:
@@ -218,6 +222,16 @@ export-training-data-from-json:
   script:
     - python ../util/convert_training_data_to_docbin.py en corpus/aggregated_ner_train_he.json
       corpus/people_en 20 0.8 61 --input-type json
+  deps: []
+  outs: []
+  spacy_version: 3.4.1
+  spacy_git_version: Unknown
+export-training-data-from-mongo:
+  cmd: python -m spacy run export-training-data-from-mongo
+  script:
+    - python ../util/merge_collections.py -o merged_output -c webpages_en_output
+    - python ../util/convert_training_data_to_docbin.py en merged_output corpus/ref_en
+      20 0.8 61 --input-type mongo
   deps: []
   outs: []
   spacy_version: 3.4.1
