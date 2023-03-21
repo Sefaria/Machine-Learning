@@ -34,7 +34,7 @@ steps:
     args:
       - --destination=gcr.io/$PROJECT_ID/prodigy-annotator:$BUILD_ID
       - --destination=gcr.io/$PROJECT_ID/prodigy-annotator:latest
-      - --cache=false
+      - --cache=true
       - --dockerfile=build/prodigy/Dockerfile
       - --context=dir://.
     id: build_prodigy_container
