@@ -8,7 +8,8 @@ ENV PRODIGY_HOME=/home/prodigy
 WORKDIR /home/prodigy
 
 # Expects the Prodigy python wheel to exist at ./researchprodigy/*
-COPY ./nonsense/* ./
+RUN echo "hello"
+COPY ./prodigy/* ./
 RUN mkdir ./prodigy_utils
 COPY ./prodigy_scripts/prodigy_utils/* ./prodigy_utils/
 RUN pip3 install ./prodigy*.whl
