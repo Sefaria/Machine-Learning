@@ -96,6 +96,8 @@ commands:
     deps:
       - "${vars.config}"
       - "models/pretrain_ref_${vars.lang}_${vars.embedding_size}"
+      - "corpus/${vars.name}_${vars.lang}_train.spacy"
+      - "corpus/${vars.name}_${vars.lang}_test.spacy"
     outputs:
       - "models/${vars.name}_${vars.lang}"
 
