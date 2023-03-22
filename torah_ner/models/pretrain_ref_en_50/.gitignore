@@ -1,2 +1,3 @@
-/model7.bin
-/model8.bin
+/*.cfg
+/*.jsonl
+/model*.bin
