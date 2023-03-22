@@ -61,8 +61,8 @@ commands:
 
   - name: export-training-data-from-mongo
     script:
-      - "python ../util/merge_collections.py -o merged_output -h ${env.mongo_host} -p ${env.mongo_port} -c ${vars.training_input}"
-      - "python ../util/convert_training_data_to_docbin.py ${vars.lang} merged_output corpus/${vars.name}_${vars.lang} ${vars.min_training_text_len} ${vars.training_percentage} ${vars.random_seed} ${env.mongo_host} ${env.mongo_port} --input-type mongo"
+      - "python ../util/merge_collections.py -o merged_output -m ${env.mongo_host} -p ${env.mongo_port} -c ${vars.training_input}"
+      - "python ../util/convert_training_data_to_docbin.py ${vars.lang} merged_output corpus/${vars.name}_${vars.lang} ${vars.min_training_text_len} ${vars.training_percentage} ${vars.random_seed} --db-host ${env.mongo_host} --db-port ${env.mongo_port} --input-type mongo"
 
   - name: export-training-data-from-json
     script:
