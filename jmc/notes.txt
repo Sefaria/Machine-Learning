@@ -29,4 +29,4 @@ Dickenson's motion for making Executive removeable by Natl. Legislature
 
 
 cd util
-python ./run_project_with_vars.py jmc ref_en.yml train-ref-model
+python ./run_project_with_vars.py jmc ref_$2.yml $1
