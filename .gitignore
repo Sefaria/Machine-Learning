@@ -5,6 +5,7 @@ prodigy/temp/
 jmc/output
 web_scraper/output
 web_scraper/urls.txt
-prodigy/output
+prodigy_scripts/output
+prodigy_scripts/temp/
 .DS_Store
 __pycache__

@@ -9,6 +9,7 @@ def run_project_with_vars(project: str, vars_name: str, task: str):
         cmd = f"python -m spacy project run {task} .".split()
         for var_name, var_value in yin['vars'].items():
             cmd += [f'--vars.{var_name}', f"{var_value}"]
+        print("Running command:", cmd)
         process = subprocess.Popen(cmd, cwd=f"../{project}")
         stdout, stderr = process.communicate()
 

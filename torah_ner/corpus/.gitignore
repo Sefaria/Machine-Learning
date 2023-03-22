@@ -6,3 +6,16 @@
 /all_text_en.txt
 /ref_subref_he_test.spacy
 /ref_subref_he_train.spacy
+/aggregated_ner_train_en.json
+/aggregated_ner_train_he.json
+/ner_mentions.json
+/people_en_test.spacy
+/people_en_train.spacy
+/people_he_test.spacy
+/people_he_train.spacy
+/stochastic_training_ner_he.json
+/stochastic_training_ner_en.json
+/stochastic_test_set_ner_en.json
+/stochastic_test_set_ner_he.json
+/ref_en_test.spacy
+/ref_en_train.spacy

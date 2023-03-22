@@ -2,7 +2,7 @@ description: "variables for training NER model for recognizing parts of citation
 vars:
   name: "ref_subref"
   lang: "he"
-  training_collections: "webpages_sub_citation_output gilyon_sub_citation_output"
+  training_input: "webpages_sub_citation_output gilyon_sub_citation_output talmud_tanakh_abbrev_sub_citation_output"
   config: "configs/subref-v3.2.cfg"
   training_percentage: 0.8
   min_training_text_len: 0

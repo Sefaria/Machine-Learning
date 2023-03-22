@@ -8,7 +8,9 @@ from sefaria.spacy_function_registry import inner_punct_tokenizer_factory
 from sefaria.model.linker.ref_part import span_inds
 from util.library_exporter import create_normalizer
 
-
+import typer
+import subprocess
+import yaml
 # "
 # {
 #     "text": <text of segment>,
@@ -76,17 +78,27 @@ def normalize_text(non_normal_char_start, non_normal_char_end, non_normal_text):
                                                                                         reverse=True)
     return (normal_text, normal_char_indices[0][0], normal_char_indices[0][1])
 
+def separate_aggregated_by_language(agg_list):
+    agg_en = []
+    agg_he = []
 
-if __name__ == "__main__":
-    print("hello world")
+    for mention in tqdm(agg_list, desc="separating mentions"):
+
+        if mention["meta"]["language"] == "en":
+            agg_en.append(mention)
+        elif mention["meta"]["language"] == "he":
+            agg_he.append(mention)
+
+    return agg_en, agg_he
+
+def aggregate(raw_mentions_filename: str, output_file_title: str):
     # stats
     problematic_count = 0
     sane_count = 0
     all_count = 0
 
-    nlp = Hebrew()
-    nlp.tokenizer = inner_punct_tokenizer_factory()(nlp)
-    with open('mentions.json') as f:
+
+    with open(raw_mentions_filename) as f:
         mentions = json.load(f)
 
     aggregated_list = []
@@ -101,12 +113,14 @@ if __name__ == "__main__":
         start_char = mention["start"]
         end_char = mention["end"]
         normal_segment, normal_char_start, normal_char_end = normalize_text(start_char, end_char, segment)
-        start_token, end_token = get_token_start_and_end_for_char_start_and_end(normal_segment, normal_char_start, normal_char_end)
-        end_token = end_token-1 # for some reason, spacy expects end_token to be minus one
+        start_token, end_token = get_token_start_and_end_for_char_start_and_end(normal_segment, normal_char_start,
+                                                                                normal_char_end)
+        
         if start_token == "failed":
             problematic_mention.append(mention)
             problematic_count += 1
             continue
+        end_token = end_token - 1  # for some reason, spacy expects end_token to be minus one
         sane_count += 1
         key = mention["ref"] + "$" + mention["versionTitle"]
 
@@ -147,9 +161,14 @@ if __name__ == "__main__":
             aggregated_dict[key]["spans"].append(new_spans_item)
 
     aggregated_list = list(aggregated_dict.values())
-    with open("aggregated.json", "w") as f:
+    agg_en, agg_he = separate_aggregated_by_language(aggregated_list)
+    with open(output_file_title + "_en.json", "w") as f:
         # Write the list of dictionaries to the file as JSON
-        json.dump(aggregated_list, f, ensure_ascii=False, indent=2)
+        json.dump(agg_en, f, ensure_ascii=False, indent=2)
+    with open(output_file_title + "_he.json", "w") as f:
+        # Write the list of dictionaries to the file as JSON
+        json.dump(agg_he, f, ensure_ascii=False, indent=2)
+
     with open("problematic.json", "w") as f:
         # Write the list of dictionaries to the file as JSON
         json.dump(problematic_mention, f, ensure_ascii=False, indent=2)
@@ -158,3 +177,10 @@ if __name__ == "__main__":
     print("all mentions count = " + str(all_count))
     print("percentage of sane: " + str((sane_count / all_count) * 100) + "%")
     print("finish")
+
+
+if __name__ == "__main__":
+    nlp = Hebrew()
+    nlp.tokenizer = inner_punct_tokenizer_factory()(nlp)
+    print("hello world")
+    typer.run(aggregate)
