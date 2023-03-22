@@ -1,3 +1,4 @@
 *
-!/prodigy/**
+!/prodigy_scripts/**
 !/build/prodigy
+!/util
