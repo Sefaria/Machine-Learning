@@ -2,14 +2,14 @@
 Functions for analyzing models
 """
 
-from typing import Callable, Iterator, List
-import spacy, re, srsly, json, csv, django
+import spacy, srsly, json, csv, django
 django.setup()
-from pymongo import InsertOne
 from sefaria.model import *
 from functools import reduce
 from tqdm import tqdm
-from prodigy_scripts.functions import stream_data, get_corpus_data
+from spacy.lang.en import English
+from prodigy_scripts.functions import stream_data
+from util.spacy_registry import inner_punct_tokenizer_factory
 
 def id_to_gen(_id):
     if _id is None:
@@ -201,7 +201,7 @@ def make_evaluation_html(data, output_folder, output_filename, lang='he'):
         chars_to_wrap += [(s, e, {"label": l, "true condition": 'fn'}) for (s, e, l) in d['fn']]
         wrapped_text = wrap_chars_with_overlaps(d['text'], chars_to_wrap, get_wrapped_text)
         html += f"""
-        <p class="ref answer-{d['answer']}">{i}) {d['ref']} - ID: {d['_id']}</p>
+        <p class="ref answer-{d.get('answer', 'accept')}">{i}) {d.get('ref', '')} - ID: {d.get('_id', '')}</p>
         <p dir="{'rtl' if lang == 'he' else 'ltr'}" class="doc">{wrapped_text}</p>
         """
     html += """
@@ -267,14 +267,14 @@ if __name__ == "__main__":
     # nlp = spacy.load('./output/yerushalmi_refs/model-last')
     # nlp = spacy.load('./output/webpages/model-last')
     # nlp = spacy.load('/home/nss/sefaria/ML/linker/models/webpages_he_achronim/model-last')
-    # nlp = spacy.load('/home/nss/sefaria/ML/linker/models/ner_he/model-last')
-    nlp = English()
-    # nlp.tokenizer = inner_punct_tokenizer_factory()(nlp)
-    # data = stream_data('localhost', 27017, 'merged_output', 'gilyon_input', 61, 0.5, 'test', 20)(nlp)
-    # print(make_evaluation_files(data, nlp, './temp', lang='he', only_errors=False))
+    nlp = spacy.load('/home/nss/sefaria/ML/torah_ner/models/ref_subref_he/model-last')
+    # nlp = English()
+    nlp.tokenizer = inner_punct_tokenizer_factory()(nlp)
+    data = stream_data('localhost', 27017, 'merged_output', 61, 0.8, 'test', 0)(nlp)
+    print(make_evaluation_files(data, nlp, './output/evaluation_results', lang='he', only_errors=False))
 
-    data = stream_data('localhost', 27017, 'webpages_en_output', -1, 0.5, 'test', 20, include_reject=True, unique_by_metadata=True)(nlp)
-    export_tagged_data_as_html(data, './output/evaluation_results', is_binary=False, start=0, lang='en')
+    # data = stream_data('localhost', 27017, 'webpages_en_output', -1, 0.5, 'test', 20, include_reject=True, unique_by_metadata=True)(nlp)
+    # export_tagged_data_as_html(data, './output/evaluation_results', is_binary=False, start=0, lang='en')
     # convert_jsonl_to_json('./output/evaluation_results/doc_evaluation.jsonl')
     # convert_jsonl_to_csv('./output/evaluation_results/doc_evaluation.jsonl')
     # spacy.training.offsets_to_biluo_tags(doc, entities)
