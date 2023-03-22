@@ -229,9 +229,10 @@ export-training-data-from-json:
 export-training-data-from-mongo:
   cmd: python -m spacy run export-training-data-from-mongo
   script:
-    - python ../util/merge_collections.py -o merged_output -c webpages_en_output
-    - python ../util/convert_training_data_to_docbin.py en merged_output corpus/ref_en
-      20 0.8 61 --input-type mongo
+    - python ../util/merge_collections.py -o merged_output -m localhost -p 27017 -c
+      webpages_sub_citation_output gilyon_sub_citation_output talmud_tanakh_abbrev_sub_citation
+    - python ../util/convert_training_data_to_docbin.py he merged_output corpus/ref_subref_he
+      0 0.8 61 --db-host localhost --db-port 27017 --input-type mongo
   deps: []
   outs: []
   spacy_version: 3.4.1
