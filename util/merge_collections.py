@@ -10,8 +10,8 @@ import argparse
 def init_argparse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument('-o', '--output-collection', dest='output', help='name of output collection')
-    parser.add_argument('-h', '--mongohost', dest='mongo_host')
-    parser.add_argument('-p', '--mongoport', dest='mongo_port')
+    parser.add_argument('-m', '--mongohost', dest='mongo_host')
+    parser.add_argument('-p', '--mongoport', dest='mongo_port', type=int)
     parser.add_argument('-c', '--input-collections', nargs='+', help='<Required> List of collections to combine', required=True, dest='input')
     return parser
 
