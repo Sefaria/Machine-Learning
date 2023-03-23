@@ -5,7 +5,7 @@ setup(
     py_modules=["main"],
     entry_points={
         'prodigy_recipes': [
-            'ref-tagging-recipe = main:ref_tagging_recipe'
+            'ner-recipe = main:ref_tagging_recipe'
         ],
         'prodigy_db': [
             'mongodb = main:db_manager'
