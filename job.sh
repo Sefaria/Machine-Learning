@@ -10,5 +10,8 @@ then
 fi
 cd util 
 python run_project_with_vars.py $1 "$3_$4" $2
+# bash job.sh torah_ner export-training-data-from-mongo ref en 50
+# bash job.sh torah_ner pretrain ref en 50
+# bash job.sh torah_ner train-ner ref en 50
 
-# bash torah_ner/job.sh torah_ner pretrain ref en 50
+
