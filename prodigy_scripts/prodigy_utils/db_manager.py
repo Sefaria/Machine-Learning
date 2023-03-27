@@ -1,12 +1,35 @@
 from pymongo import MongoClient
+import urllib.parse
 
 class MongoProdigyDBManager:
 
-    def __init__(self, output_collection, host='localhost', port=27017):
-        self.client = MongoClient(host, port)
+    def __init__(self, output_collection, host='localhost', port=27017, user="", password="", replicaset_name=""):
+        self.client = MongoProdigyDBManager.init_client(host, port, user, password, replicaset_name)
         self.db_name = "prodigy"
         self.db = getattr(self.client, self.db_name)
         self.output_collection = getattr(self.db, output_collection)
+
+    @classmethod
+    def init_client(cls, host, port, user, password, replicaset_name):
+        # If we have jsut a single instance mongo (such as for development) the host param should contain jsut the host string e.g "localhost")
+        if replicaset_name == "":
+            if user and password:
+                return MongoClient(host, port, username=user, password=password)
+            else:
+                return MongoClient(host, port)
+        # Else if we are using a replica set mongo, we need to connect with a URI that containts a comma separated list of 'host:port' strings
+        else:
+            if user and password:
+                # and also escape user/pass
+                username = urllib.parse.quote_plus(user)
+                password = urllib.parse.quote_plus(password)
+                connection_uri = 'mongodb://{}:{}@{}/?ssl=false&readPreference="secondaryPreferred"&replicaSet={}'.format(
+                    username, password, host, replicaset_name)
+            else:
+                connection_uri = 'mongodb://{}/?ssl=false&readPreference="secondaryPreferred"&replicaSet={}'.format(
+                    host, replicaset_name)
+            # Now connect to the mongo server
+            return MongoClient(connection_uri)
 
     def get_dataset(self, name):
         return list(self.output_collection.find({"datasets": name}))
