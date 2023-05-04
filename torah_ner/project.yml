@@ -20,9 +20,9 @@ vars:
 env:
   mongo_host: MONGO_HOST
   mongo_port: MONGO_PORT
-  user: ""
-  password: ""
-  replicaset_name: ""
+  user: MONGO_USER
+  password: MONGO_PASSWORD
+  replicaset_name: REPLICASET_NAME
   gpu_id: GPU_ID
 
 
