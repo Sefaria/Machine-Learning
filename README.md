@@ -71,3 +71,12 @@ You must use `run_project_with_vars.py` to run this project.
 | ref_he    | Vars for training Hebrew NER model to recognize citations                           |
 | subref_he | Vars for training Hebrew NER model to recognize parts of citation within a citation |
 |           |                                                                                     |
+
+## Machine Learning Job
+For a docker container named mljob, one can set the entrypoint to bash and then run python util/job.py.  For example,
+```docker run -it --entrypoint /bin/bash -v $GOOGLE_APPLICATION_CREDENTIALS:/tmp/keys/mljob.json:ro -e GOOGLE_APPLICATION_CREDENTIALS=/tmp/keys/mljob.json -e MONGO_HOST="172.17.0.2" -e MONGO_PORT=27017 -e MONGO_USER="" -e MONGO_PASSWORD="" -e REPLICASET_NAME="" -e GPU_ID=0 -e ML_PROJECT_DIR=torah_ner mljob
+```
+Then, once inside the docker container, you should pass a task(s) separated by comma, language, yaml file name in `$ML_PROJECT_DIR/vars`, and embedding size:
+```
+python util/job.py pretrain,train-ner en ref_en 50
+```
