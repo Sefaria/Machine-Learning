@@ -80,3 +80,5 @@ Then, once inside the docker container, you should pass a task(s) separated by c
 ```
 python util/job.py pretrain,train-ner en ref_en 50
 ```
+
+`ML_PROJECT_DIR`, `MONGO_HOST`, `MONGO_PORT`, `MONGO_USER`, `MONGO_PASSWORD`, and `REPLICASET_NAME` are all specific to the environment running the job (for example, Sefaria-Project or ContextUS).
