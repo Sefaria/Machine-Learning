@@ -2,11 +2,12 @@ FROM python:3.9
 
 WORKDIR /app/
 ENV PYTHONPATH="/app/"
-ENV MONGO_HOST="mongodb://127.0.0.1"
+ENV MONGO_HOST="172.17.0.2"
 ENV MONGO_PORT="27017"
 ENV MONGO_USER=""
 ENV MONGO_PASSWORD=""
 ENV REPLICASET_NAME=""
+ENV ML_PROJECT_DIR="torah_ner"
 ENV GPU_ID=-1
 COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt

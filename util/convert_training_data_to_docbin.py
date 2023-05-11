@@ -2,8 +2,8 @@ from spacy.tokens import DocBin
 import argparse
 import json
 from typing import List
-from library_exporter import create_nlp
-from training_utils import get_mongo_docs, get_train_test_data
+from helper import create_nlp, get_mongo_docs
+from training_utils import get_train_test_data
 
 
 def output_mongo_docs(mongo_docs: List[dict], lang: str, output_file: str) -> None:

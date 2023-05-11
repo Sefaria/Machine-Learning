@@ -2,32 +2,10 @@ import django, json, argparse, os
 django.setup()
 from tqdm import tqdm
 from collections import defaultdict
-
-from util.spacy_registry import inner_punct_tokenizer_factory, get_lang_detect_nlp
-from spacy.lang.en import English
-from spacy.lang.he import Hebrew
+from helper import create_nlp, create_normalizer
+from util.spacy_registry import get_lang_detect_nlp
 from sefaria.model import *
 from sefaria.system.exceptions import InputError
-from sefaria.helper.normalization import NormalizerByLang, NormalizerComposer
-
-
-def create_normalizer():
-    base_normalizer_steps = ['unidecode', 'html', 'double-space']
-    return NormalizerByLang({
-        'en': NormalizerComposer(base_normalizer_steps),
-        'he': NormalizerComposer(base_normalizer_steps + ['maqaf', 'cantillation']),
-    })
-
-
-def create_nlp(lang):
-    """
-    Create nlp object for tokenization
-    :return:
-    """
-    nlp = Hebrew() if lang == 'he' else English()
-    nlp.tokenizer = inner_punct_tokenizer_factory()(nlp)
-    return nlp
-
 
 class TextWalker:
 

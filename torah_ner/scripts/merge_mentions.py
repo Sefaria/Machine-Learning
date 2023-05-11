@@ -6,7 +6,7 @@ from tqdm import tqdm
 from spacy.lang.he import Hebrew
 from sefaria.spacy_function_registry import inner_punct_tokenizer_factory
 from sefaria.model.linker.ref_part import span_inds
-from util.library_exporter import create_normalizer
+from util.helper import create_normalizer
 
 import typer
 import subprocess

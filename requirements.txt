@@ -4,3 +4,6 @@ typer==0.4.1
 dvc[gs]==2.10.2
 fsspec==2022.11.0
 pyyaml
+nltk
+scikit-learn
+fasttext

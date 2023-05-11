@@ -46,14 +46,14 @@ workflows:
 # via "spacy project run [command] [path]". The help message is optional and
 # shown when executing "spacy project run [optional command] [path] --help".
 commands:
-  - name: "download-sefaria-dump"
+  - name: "download-sefaria-dump"  # this command is irrelevant for usage in the ML job (util/job.py) as it is only intended for usage when Sefaria-Project is set up
     script:
       - "sh ../util/restore_db.sh"
     deps:
       # actually dependent on dump file in Google Cloud...
       - "../util/restore_db.sh"
 
-  - name: "export-library"
+  - name: "export-library"  # this is dependent on Sefaria-Project and so doesn't work in the ML job (util/job.py)
     script:
       - "python ../util/library_exporter.py ${vars.lang} -f both -w ${vars.webpages_dir} -o corpus/all_text_${vars.lang} -s"
     deps:

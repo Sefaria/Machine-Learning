@@ -7,7 +7,7 @@ import re
 import sys
 import random
 import spacy
-from util.library_exporter import create_normalizer
+from util.helper import create_normalizer
 
 #
 #
