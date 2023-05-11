@@ -76,9 +76,9 @@ You must use `run_project_with_vars.py` to run this project.
 For a docker container named mljob, one can set the entrypoint to bash and then run python util/job.py.  For example,
 ```docker run -it --entrypoint /bin/bash -v $GOOGLE_APPLICATION_CREDENTIALS:/tmp/keys/mljob.json:ro -e GOOGLE_APPLICATION_CREDENTIALS=/tmp/keys/mljob.json -e MONGO_HOST="172.17.0.2" -e MONGO_PORT=27017 -e MONGO_USER="" -e MONGO_PASSWORD="" -e REPLICASET_NAME="" -e GPU_ID=0 -e ML_PROJECT_DIR=torah_ner mljob
 ```
-Then, once inside the docker container, you should pass a task(s) separated by comma, language, yaml file name in `$ML_PROJECT_DIR/vars`, and embedding size:
+Then, once inside the docker container, you should pass a task(s) separated by comma and yaml file name in `$ML_PROJECT_DIR/vars`:
 ```
-python util/job.py pretrain,train-ner en ref_en 50
+python util/job.py pretrain,train-ner ref_en
 ```
 
 `ML_PROJECT_DIR`, `MONGO_HOST`, `MONGO_PORT`, `MONGO_USER`, `MONGO_PASSWORD`, and `REPLICASET_NAME` are all specific to the environment running the job (for example, Sefaria-Project or ContextUS).

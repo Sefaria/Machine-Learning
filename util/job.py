@@ -18,9 +18,7 @@ def parse_yml(dep):
 project_dir = os.getenv('ML_PROJECT_DIR', default='torah_ner')
 parent_dir = os.path.dirname(os.getcwd())
 tasks = sys.argv[1]  # example: "pretrain" or "pretrain,train-ner"
-lang = sys.argv[2]  # example: "en"
-vars_file = sys.argv[3]  # example: "ref_en"
-embedding_size = sys.argv[4]  # example: "50"
+vars_file = sys.argv[2]  # example: "ref_en"
 yml = None
 
 os.chdir(f"{project_dir}")
