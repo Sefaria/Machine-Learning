@@ -73,6 +73,10 @@ You must use `run_project_with_vars.py` to run this project.
 |           |                                                                                     |
 
 ## Machine Learning Job
+To build a container called mljob, make sure you are in the root directory of the Machine-Learning project and run:
+```
+docker build . -f ./build/training/Dockerfile -t mljob
+```
 For a docker container named mljob, one can set the entrypoint to bash and then run python util/job.py.  For example,
 ```docker run -it --entrypoint /bin/bash -v $GOOGLE_APPLICATION_CREDENTIALS:/tmp/keys/mljob.json:ro -e GOOGLE_APPLICATION_CREDENTIALS=/tmp/keys/mljob.json -e MONGO_HOST="172.17.0.2" -e MONGO_PORT=27017 -e MONGO_USER="" -e MONGO_PASSWORD="" -e REPLICASET_NAME="" -e GPU_ID=0 -e ML_PROJECT_DIR=torah_ner mljob
 ```
