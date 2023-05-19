@@ -10,8 +10,6 @@ spec:
       - args:
         - $TASK_LIST
         - $VARS_FILE 
-        command:
-        - bash
         env:
         - name: TASK_LIST
           value: {{ .Values.tasklist }}
