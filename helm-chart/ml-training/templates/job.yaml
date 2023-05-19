@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ .Release.Name }}-{{ {{ now | date "20060102-150405" }} }}
+  name: {{ .Release.Name }}-{{ now | date "20060102-150405" }}
   namespace: {{ .Release.Namespace }}
 spec:
   template:
