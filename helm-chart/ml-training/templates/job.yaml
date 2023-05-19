@@ -8,13 +8,8 @@ spec:
     spec:
       containers:
       - args:
-        - $TASK_LIST
-        - $VARS_FILE 
-        env:
-        - name: TASK_LIST
-          value: {{ .Values.tasklist }}
-        - name: VARS_FILE
-          value: {{ .Values.varsfile }}
+        - {{ .Values.tasklist }}
+        - {{ .Values.varsfile }}
         envFrom:
         - secretRef:
             name: {{ .Values.secretRef }} 
