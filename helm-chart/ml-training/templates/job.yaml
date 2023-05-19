@@ -1,0 +1,30 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-{{ {{ now | date "20060102-150405" }} }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  template:
+    spec:
+      containers:
+      - args:
+        - $TASK_LIST
+        - $VARS_FILE 
+        command:
+        - bash
+        env:
+        - name: TASK_LIST
+          value: {{ .Values.tasklist }}
+        - name: VARS_FILE
+          value: {{ .Values.varsfile }}
+        envFrom:
+        - secretRef:
+            name: {{ .Values.secretRef }} 
+        image: {{ .Values.image.registry }}/ml-training:{{ .Values.image.version }}
+        name: training-job
+        {{- with .Values.resources }}
+        resources: {{ toYaml . | nindent 10 }}
+        {{- end }}
+      {{-  with .Values.tolerations }}
+      tolerations: {{ toYaml . | nindent 8 }}
+      {{- end }}

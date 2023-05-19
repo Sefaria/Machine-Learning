@@ -1,0 +1,20 @@
+tasklist: pretrain
+varsfile: ref_en
+secretRef: ml-training
+image:
+  registry: example.com
+  version: deadbeef
+resources:
+  requests:
+    cpu: 1
+    memory: 2Gi
+    nvidia.com/gpu: 1
+  limits:
+    cpu: 2
+    memory: 4Gi
+    nvidia.com/gpu: 1
+tolerations:
+- effect: NoSchedule
+  key: nvidia.com/gpu
+  operator: Equal
+  value: "present"
