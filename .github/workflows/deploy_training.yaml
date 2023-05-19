@@ -50,6 +50,7 @@ jobs:
           tags: |
             type=sha,enable=true,priority=100,prefix=sha-,suffix=-${{ steps.date.outputs.date }},format=short
             type=sha
+            type=raw,value=${{ steps.get-sha.outputs.sha_short }}
           flavor: |
             latest=true
       - name: build and push
