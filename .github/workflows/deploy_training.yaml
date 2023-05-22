@@ -10,7 +10,7 @@ on:
         required: true
 
 jobs:
-  build-generic:
+  build-and-deploy:
     runs-on: ubuntu-latest
     permissions:
       contents: 'read'
@@ -50,6 +50,7 @@ jobs:
           tags: |
             type=sha,enable=true,priority=100,prefix=sha-,suffix=-${{ steps.date.outputs.date }},format=short
             type=sha
+            type=raw,value=${{ steps.get-sha.outputs.sha_short }}
           flavor: |
             latest=true
       - name: build and push
@@ -66,9 +67,9 @@ jobs:
         with:
           project_id: ${{ secrets.DEV_GKE_PROJECT_ID }}
           cluster_name: 'cluster-1'
-          location: 'us-east-1'
+          location: 'us-east1-b'
       - name: Deploy Job
-        run: helm upgrade -i --set image.registry=$REGISTRY --set image.version=$GIT_COMMIT --set tasklist=${{ input.tasklist }} --set varsfile=${{ inputs.vars-file }} ml-training-job helm-chart/ml-training 
+        run: helm upgrade -i --set image.registry=$REGISTRY --set image.version=$GIT_COMMIT --set tasklist=${{ inputs.tasklist }} --set varsfile=${{ inputs.vars-file }} ml-training-job helm-chart/ml-training 
         env:
           GIT_COMMIT: "${{ steps.get-sha.outputs.sha_short }}"
           REGISTRY: "gcr.io/${{ secrets.DEV_GKE_PROJECT }}"
