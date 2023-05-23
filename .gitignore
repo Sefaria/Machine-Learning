@@ -9,3 +9,4 @@ prodigy_scripts/output
 prodigy_scripts/temp/
 .DS_Store
 __pycache__
+/newfile
