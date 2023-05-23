@@ -52,6 +52,5 @@ def init_argparse() -> argparse.ArgumentParser:
 if __name__ == '__main__':
     parser = init_argparse()
     args = parser.parse_args()
-    print(args)
     main(args.lang, args.input, args.output_file_prefix, args.min_training_text_len, args.training_percentage, args.random_state, args.input_type,
          args.db_host, args.db_port, args.user, args.password, args.replicaset)

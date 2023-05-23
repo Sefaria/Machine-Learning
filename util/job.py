@@ -54,10 +54,18 @@ for task in tasks.split(","):
             print(f"{dep} already exists")
 
     run_project_with_vars(project_dir, vars_file, task)
-    # for output in outputs[task]:
-    #     output = parse_yml(output)
-    #     actual_path = f"{project_dir}/{output}"
-    #     if not os.path.exists(output+".dvc"):
-    #         os.system(f"dvc add {output}")
+    for output in outputs[task]:
+        output = parse_yml(output)
+        actual_path = f"{project_dir}/{output}"
+        if not os.path.exists(output+".dvc"):
+            os.system(f"dvc add {output}")
+            with open(output+".dvc", 'r') as f:
+                dvc_text = list(f)
+            print(f"DVC file: {project_dir}/{output} \n {dvc_text}")
+    if len(outputs[task]) > 0:
+        os.system(f"dvc push")
+
+
+
 
 

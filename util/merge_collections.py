@@ -23,7 +23,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     print("Input Collections:", ", ".join(args.input))
     print("Output Collection:", args.output)
-    print(args)
     output_db = MongoProdigyDBManager(args.output, host=args.mongo_host, port=args.mongo_port, user=args.user, password=args.password, replicaset_name=args.replicaset)
     output_db.output_collection.delete_many({})
     all_docs = []
