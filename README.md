@@ -78,7 +78,8 @@ To build a container called mljob, make sure you are in the root directory of th
 docker build . -f ./build/training/Dockerfile -t mljob
 ```
 For a docker container named mljob, one can set the entrypoint to bash and then run python util/job.py.  For example,
-```docker run -it --entrypoint /bin/bash -v $GOOGLE_APPLICATION_CREDENTIALS:/tmp/keys/mljob.json:ro -e GOOGLE_APPLICATION_CREDENTIALS=/tmp/keys/mljob.json -e MONGO_HOST="172.17.0.2" -e MONGO_PORT=27017 -e MONGO_USER="" -e MONGO_PASSWORD="" -e REPLICASET_NAME="" -e GPU_ID=0 -e ML_PROJECT_DIR=torah_ner gcr.io/development-205018/ PYTHONPATH=/app ml-training:latest
+```
+docker run -it --entrypoint /bin/bash -e $GOOGLE_APPLICATION_CREDENTIALS:/tmp/keys/mljob.json:ro -e GOOGLE_APPLICATION_CREDENTIALS=/tmp/keys/mljob.json -e MONGO_HOST="172.17.0.2" -e MONGO_PORT=27017 -e MONGO_USER="" -e MONGO_PASSWORD="" -e REPLICASET_NAME="" -e GPU_ID=-1 -e ML_PROJECT_DIR=torah_ner -e PYTHONPATH=/app mljob
 
 ```
 Then, once inside the docker container, you should pass a task(s) separated by comma and yaml file name in `$ML_PROJECT_DIR/vars`:
