@@ -10,7 +10,7 @@ def run_project_with_vars(project: str, vars_name: str, task: str):
         print_out_cmd = cmd
         for var_name, var_value in yin['vars'].items():
             cmd += [f'--vars.{var_name}', f"{var_value}"]
-            if "password" != var_name:
+            if "password" not in var_name:
                 print_out_cmd += [f'--vars.{var_name}', f"{var_value}"]
         print("Running command:", print_out_cmd)
         process = subprocess.Popen(cmd, cwd=f"../{project}")

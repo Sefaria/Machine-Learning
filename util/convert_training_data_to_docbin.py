@@ -4,6 +4,7 @@ import json
 from typing import List
 from helper import create_nlp, get_mongo_docs
 from training_utils import get_train_test_data
+import os
 
 
 def output_mongo_docs(mongo_docs: List[dict], lang: str, output_file: str) -> None:
@@ -45,12 +46,12 @@ def init_argparse() -> argparse.ArgumentParser:
     parser.add_argument('-m', '--db-host', dest='db_host')
     parser.add_argument('-p', '--db-port', dest='db_port', type=int)
     parser.add_argument("-u", "--user", dest="user", const="", nargs="?")
-    parser.add_argument("-pw", "--password", dest="password", const="", nargs="?")
     parser.add_argument("-r", "--replicaset", dest="replicaset", const="", nargs="?")
     return parser
 
 if __name__ == '__main__':
     parser = init_argparse()
     args = parser.parse_args()
+    password = os.getenv('MONGO_PASSWORD')
     main(args.lang, args.input, args.output_file_prefix, args.min_training_text_len, args.training_percentage, args.random_state, args.input_type,
-         args.db_host, args.db_port, args.user, args.password, args.replicaset)
+         args.db_host, args.db_port, args.user, password, args.replicaset)
