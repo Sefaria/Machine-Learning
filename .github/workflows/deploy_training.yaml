@@ -69,7 +69,15 @@ jobs:
           cluster_name: 'cluster-1'
           location: 'us-east1-b'
       - name: Deploy Job
-        run: helm upgrade -i --set image.registry=$REGISTRY --set image.version=$GIT_COMMIT --set tasklist=${{ inputs.tasklist }} --set varsfile=${{ inputs.vars-file }} ml-training-job helm-chart/ml-training 
+        run: |-
+          helm upgrade -i 
+          --set image.registry=$REGISTRY
+          --set image.version=$GIT_COMMIT
+          --set tasklist=${{ inputs.tasklist }}
+          --set varsfile=${{ inputs.vars-file }}
+          --set 'serviceAccount.annotations.iam\.gke\.io\/gcp-service-account'=machine-learning-job@${{ secrets.DEV_GKE_PROJECT }}.iam.gserviceaccount.com
+          ml-training-job
+          helm-chart/ml-training 
         env:
           GIT_COMMIT: "${{ steps.get-sha.outputs.sha_short }}"
           REGISTRY: "gcr.io/${{ secrets.DEV_GKE_PROJECT }}"
