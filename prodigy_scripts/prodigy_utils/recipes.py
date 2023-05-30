@@ -5,7 +5,7 @@ from spacy.lang.he import Hebrew
 from spacy.util import minibatch, compounding
 from prodigy.components.sorters import prefer_uncertain
 from prodigy.components.preprocess import add_tokens, split_spans, split_sentences
-
+import os
 from db_manager import MongoProdigyDBManager
 
 from pathlib import Path
@@ -133,14 +133,14 @@ def train_on_current_output(output_collection='examples2_output'):
     db_host=("Mongo host", "option", None, str),
     db_port=("Mongo port", "option", None, int),
     user=("Mongo Username", "option", None, str),
-    password=("Mongo Password", "option", None, str),
     replicaset_name=("Mongo Replicaset Name", "option", None, str),
     dir=("Direction of text to display. Either 'ltr' or 'rtl'", "option", None, str),
     lang=("Lang of training data. Either 'en' or 'he'", "option", None, str),
     train_on_input=("Should empty model be trained on input spans?", "option", None, int),
     should_add_predictions=("When there is an existing model, should you use it to add predictions to input", "option", None, int),
 )
-def ref_tagging_recipe(dataset, input_collection, output_collection, labels, model_dir=None, view_id="text", db_host="localhost", user=None, password=None, replicaset_name=None, db_port=27017, dir='rtl', lang='he',train_on_input=1, should_add_predictions=1):
+def ref_tagging_recipe(dataset, input_collection, output_collection, labels, model_dir=None, view_id="text", db_host="localhost", user=None, replicaset_name=None, db_port=27017, dir='rtl', lang='he',train_on_input=1, should_add_predictions=1):
+    password = os.getenv('MONGO_PASSWORD', '')
     my_db = MongoProdigyDBManager(output_collection, host=db_host, port=db_port, user=user, password=password, replicaset_name=replicaset_name)
     labels = labels.split(',')
     nlp, model_exists = load_model(model_dir, labels, lang)
