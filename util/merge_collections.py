@@ -26,7 +26,7 @@ if __name__ == "__main__":
     password = os.getenv('MONGO_PASSWORD')
     output_db = MongoProdigyDBManager(args.output, host=args.mongo_host, port=args.mongo_port, user=args.user, password=password, replicaset_name=args.replicaset)
     print("OUTPUT: " + str(list(output_db.client.list_databases())))
-    print(f"collection in output db: {output_db.output_collection.count()}")
+    print(f"collection in output db: {output_db.output_collection.count_documents({})}")
     output_db.output_collection.delete_many({})
     all_docs = []
     unique_keys = set()
@@ -35,7 +35,7 @@ if __name__ == "__main__":
         limit = limit if limit is None else int(limit)
         input_db = MongoProdigyDBManager(in_collection, host=args.mongo_host, port=args.mongo_port, user=args.user, password=password, replicaset_name=args.replicaset)
         print("INPUT DBS: " + str(list(input_db.client.list_databases())))
-        print(f"collection in input db: {input_db.output_collection.count()}")
+        print(f"collection in input db: {input_db.output_collection.count_documents({})}")
         temp_docs = list(input_db.output_collection.find({}))[:limit]
         for doc in temp_docs:
             key = (tuple(sorted(doc['meta'].items(), key=lambda x: x[0])), doc['text'])
