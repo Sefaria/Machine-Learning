@@ -18,3 +18,8 @@ tolerations:
   key: nvidia.com/gpu
   operator: Equal
   value: "present"
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}

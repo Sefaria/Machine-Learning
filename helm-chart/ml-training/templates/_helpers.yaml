@@ -1,0 +1,8 @@
+{{/* Create the name of service account to use */}}
+{{- define "machineLearning.serviceAccountName" -}}
+{{- if .Values.serviceAccount.create -}}
+    {{ default .Release.Name .Values.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.serviceAccount.name }}
+{{- end -}}
+{{- end -}}
