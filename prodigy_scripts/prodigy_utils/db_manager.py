@@ -29,6 +29,7 @@ class MongoProdigyDBManager:
                 connection_uri = 'mongodb://{}/?ssl=false&readPreference="secondaryPreferred"&replicaSet={}'.format(
                     host, replicaset_name)
             # Now connect to the mongo server
+            print(f"URI: {connection_uri}")
             return MongoClient(connection_uri)
 
     def get_dataset(self, name):

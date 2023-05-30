@@ -142,6 +142,9 @@ def train_on_current_output(output_collection='examples2_output'):
 def ref_tagging_recipe(dataset, input_collection, output_collection, labels, model_dir=None, view_id="text", db_host="localhost", user="", replicaset_name="", db_port=27017, dir='rtl', lang='he',train_on_input=1, should_add_predictions=1):
     password = os.getenv('MONGO_PASSWORD', '')
     my_db = MongoProdigyDBManager(output_collection, host=db_host, port=db_port, user=user, password=password, replicaset_name=replicaset_name)
+    print("OUTPUT: " + str(list(my_db.client.list_databases())))
+    print(f"collection in output db: {my_db.output_collection.count_documents({})}")
+    print(my_db.client)
     labels = labels.split(',')
     nlp, model_exists = load_model(model_dir, labels, lang)
     if not model_exists and train_on_input == 1 and model_dir is not None:
