@@ -1,5 +1,5 @@
 srsly
-spacy
+spacy==3.4
 pymongo
 nltk
 scikit-learn
