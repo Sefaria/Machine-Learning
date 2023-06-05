@@ -63,7 +63,8 @@ for task in tasks.split(","):
                 dvc_text = list(f)
             print(f"DVC file: {project_dir}/{output} \n {dvc_text}")
     if len(outputs[task]) > 0:
-        os.system(f"dvc push")
+        os.system(f"dvc status -c")
+        #os.system(f"dvc push")
 
 
 
