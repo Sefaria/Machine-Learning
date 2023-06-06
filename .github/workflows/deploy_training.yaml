@@ -77,7 +77,7 @@ jobs:
           --set image.version=$GIT_COMMIT
           --set tasklist=${{ inputs.tasklist }}
           --set varsfile=${{ inputs.vars-file }}
-          --set 'serviceAccount.annotations.iam\.gke\.io\/gcp-service-account'=machine-learning-job@${{ secrets.DEV_GKE_PROJECT }}.iam.gserviceaccount.com
+          --set 'serviceAccount.annotations.iam\.gke\.io\/gcp-service-account'=machine-learning@${{ secrets.DEV_GKE_PROJECT }}.iam.gserviceaccount.com
         env:
           GIT_COMMIT: "${{ steps.get-sha.outputs.sha_short }}"
           REGISTRY: "gcr.io/${{ secrets.DEV_GKE_PROJECT }}"
