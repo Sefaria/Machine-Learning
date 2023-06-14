@@ -2,14 +2,18 @@
 Functions for analyzing models
 """
 
-import spacy, srsly, json, csv, django
+import spacy, srsly, json, csv, django, typer
 django.setup()
 from sefaria.model import *
 from functools import reduce
 from tqdm import tqdm
+from util.training_utils import get_corpus_data
 from spacy.lang.en import English
-from prodigy_scripts.functions import stream_data
+from spacy.lang.he import Hebrew
 from util.spacy_registry import inner_punct_tokenizer_factory
+from sefaria.utils.util import wrap_chars_with_overlaps
+from util.helper import get_window_around_match, generate_example_stream
+
 
 def id_to_gen(_id):
     if _id is None:
@@ -130,25 +134,6 @@ def export_tagged_data_as_html(tagged_data, output_folder, is_binary=True, start
     make_evaluation_csv(output_json, output_folder, 'doc_export.csv')
 
 
-def wrap_chars_with_overlaps(s, chars_to_wrap, get_wrapped_text, return_chars_to_wrap=False):
-    chars_to_wrap.sort(key=lambda x: (x[0], x[0] - x[1]))
-    for i, (start, end, metadata) in enumerate(chars_to_wrap):
-        wrapped_text, start_added, end_added = get_wrapped_text(s[start:end], metadata)
-        s = s[:start] + wrapped_text + s[end:]
-        chars_to_wrap[i] = (start, end + start_added + end_added, metadata)
-        for j, (start2, end2, metadata2) in enumerate(chars_to_wrap[i + 1:]):
-            if start2 >= end:
-                start2 += end_added
-            start2 += start_added
-            if end2 > end:
-                end2 += end_added
-            end2 += start_added
-            chars_to_wrap[i + j + 1] = (start2, end2, metadata2)
-    if return_chars_to_wrap:
-        return s, chars_to_wrap
-    return s
-
-
 def make_evaluation_csv(data, output_folder, output_filename):
     rows = []
     for i, d in enumerate(data):
@@ -218,20 +203,6 @@ def convert_jsonl_to_json(filename):
         json.dump(j, fout, ensure_ascii=False, indent=2)
 
 
-def get_window_around_match(start, end, text, window=10):
-    before_window, after_window = '', ''
-
-    before_text = text[:start]
-    before_window_words = list(filter(lambda x: len(x) > 0, before_text.split()))[-window:]
-    before_window = " ".join(before_window_words)
-
-    after_text = text[end:]
-    after_window_words = list(filter(lambda x: len(x) > 0, after_text.split()))[:window]
-    after_window = " ".join(after_window_words)
-
-    return before_window, after_window
-
-
 def convert_jsonl_to_csv(filename):
     j = srsly.read_jsonl(filename)
     rows = []
@@ -263,25 +234,31 @@ def convert_jsonl_to_csv(filename):
         c.writerows(rows)
 
 
+def main(task: str, lang: str, collection_name: str, model_dir: str = None, db_host: str = "localhost", db_port: int = 27017,
+         random_state: int = 61, train_perc: float = 0.8, min_len: int = 20):
+    if task == "evaluate model":
+        nlp = spacy.load(model_dir)
+        docs = get_corpus_data(db_host, db_port, collection_name, random_state, train_perc, "test", min_len)
+        evaluated_docs = generate_example_stream(nlp, docs)
+        print(make_evaluation_files(evaluated_docs, nlp, './output/evaluation_results', lang='he', only_errors=False))
+    elif task == "export tagged data":
+        nlp = English() if lang == "en" else Hebrew()
+        nlp.tokenizer = inner_punct_tokenizer_factory()(nlp)
+        docs = get_corpus_data(db_host, db_port, collection_name, -1, 0, "test", min_len, include_reject=False)
+        exported_docs = generate_example_stream(nlp, docs)
+        export_tagged_data_as_html(exported_docs, './output/evaluation_results', is_binary=False, start=0, lang='en')
+    elif task == "output data to refine":
+        pass
+        ## Output test data to collection to refine in prodigy
+        ## This code hasn't been run in a while and doesn't work. Keeping hear for legacy.
+        # data = get_corpus_data('localhost', 27017, 'merged_output', 'gilyon_input', 61, 0.5, 'test', 20)
+        # dbm = MongoProdigyDBManager("test_data_to_refine")
+        # dbm.output_collection.delete_many({})
+        # dbm.output_collection.bulk_write([InsertOne(x) for x in data])
+    else:
+        print("No task matched")
+
+
 if __name__ == "__main__":
-    # nlp = spacy.load('./output/yerushalmi_refs/model-last')
-    # nlp = spacy.load('./output/webpages/model-last')
-    # nlp = spacy.load('/home/nss/sefaria/ML/linker/models/webpages_he_achronim/model-last')
-    nlp = spacy.load('/home/nss/sefaria/ML/torah_ner/models/ref_subref_he/model-last')
-    # nlp = English()
-    nlp.tokenizer = inner_punct_tokenizer_factory()(nlp)
-    data = stream_data('localhost', 27017, 'merged_output', 61, 0.8, 'test', 0)(nlp)
-    print(make_evaluation_files(data, nlp, './output/evaluation_results', lang='he', only_errors=False))
-
-    # data = stream_data('localhost', 27017, 'webpages_en_output', -1, 0.5, 'test', 20, include_reject=True, unique_by_metadata=True)(nlp)
-    # export_tagged_data_as_html(data, './output/evaluation_results', is_binary=False, start=0, lang='en')
-    # convert_jsonl_to_json('./output/evaluation_results/doc_evaluation.jsonl')
-    # convert_jsonl_to_csv('./output/evaluation_results/doc_evaluation.jsonl')
-    # spacy.training.offsets_to_biluo_tags(doc, entities)
-
-    ## Output test data to collection to refine in prodigy
-    # data = get_corpus_data('localhost', 27017, 'merged_output', 'gilyon_input', 61, 0.5, 'test', 20)
-    # dbm = MongoProdigyDBManager("test_data_to_refine")
-    # dbm.output_collection.delete_many({})
-    # dbm.output_collection.bulk_write([InsertOne(x) for x in data])
+    typer.run(main)
 
