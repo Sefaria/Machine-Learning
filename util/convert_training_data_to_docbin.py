@@ -2,7 +2,7 @@ from spacy.tokens import DocBin
 import argparse
 import json
 from typing import List
-from helper import create_nlp, get_mongo_docs
+from helper import create_nlp, get_mongo_docs_or_load_json
 from training_utils import get_train_test_data
 import os
 
@@ -25,11 +25,7 @@ def output_mongo_docs(mongo_docs: List[dict], lang: str, output_file: str) -> No
 
 def main(lang: str, input: str, output_file_prefix: str, min_training_text_len: int, training_percentage: float, random_state: int, input_type: str = "mongo",
          db_host: str = "localhost", db_port: int = 27017, user: str = "", password: str = "", replicaset: str = ""):
-    if input_type == "mongo":
-        data = get_mongo_docs(min_training_text_len, True, input, db_host, db_port, user, password, replicaset)
-    elif input_type == "json":
-        with open(input, "r") as fin:
-            data = json.load(fin)
+    data = get_mongo_docs_or_load_json(input, input_type, min_training_text_len, True, db_host, db_port, password, replicaset)
     train_data, test_data = get_train_test_data(random_state, data, training_percentage)
     output_mongo_docs(train_data, lang, f"{output_file_prefix}_train.spacy")
     output_mongo_docs(test_data, lang, f"{output_file_prefix}_test.spacy")
