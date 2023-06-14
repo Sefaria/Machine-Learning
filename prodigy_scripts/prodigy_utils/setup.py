@@ -2,7 +2,8 @@ from setuptools import setup
 
 setup(
     name='prodigy_utils',
-    py_modules=["main"],
+    py_modules=["db_manager, recipes, main"],
+    version="0.0.1",
     entry_points={
         'prodigy_recipes': [
             'ner-recipe = main:ref_tagging_recipe'
