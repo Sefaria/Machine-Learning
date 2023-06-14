@@ -5,7 +5,7 @@ from spacy.lang.en import English
 from spacy.lang.he import Hebrew
 
 
-def get_mongo_docs(min_training_text_len, unique_by_metadata=True, *db_manager_args) -> List[dict]:
+def load_mongo_docs(min_training_text_len, unique_by_metadata=True, *db_manager_args) -> List[dict]:
     from db_manager import MongoProdigyDBManager
     print(db_manager_args)
     my_db = MongoProdigyDBManager(*db_manager_args)
@@ -16,9 +16,9 @@ def get_mongo_docs(min_training_text_len, unique_by_metadata=True, *db_manager_a
     return data
 
 
-def get_mongo_docs_or_load_json(input, input_type: str, min_training_text_len, unique_by_metadata=True, *db_manager_args):
+def load_mongo_docs_or_json(input, input_type: str, min_training_text_len, unique_by_metadata=True, *db_manager_args):
     if input_type == "mongo":
-        return get_mongo_docs(min_training_text_len, unique_by_metadata, input, *db_manager_args)
+        return load_mongo_docs(min_training_text_len, unique_by_metadata, input, *db_manager_args)
     elif input_type == "json":
         with open(input, "r") as fin:
             return json.load(fin)

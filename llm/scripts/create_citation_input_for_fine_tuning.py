@@ -1,4 +1,4 @@
-from util.helper import get_mongo_docs_or_load_json
+from util.helper import load_mongo_docs_or_json
 import os
 import argparse
 from sefaria.utils.util import wrap_chars_with_overlaps
@@ -43,8 +43,8 @@ if __name__ == '__main__':
     parser = init_argparse()
     args = parser.parse_args()
     password = os.getenv('MONGO_PASSWORD')
-    citation_docs = get_mongo_docs_or_load_json(args.input, args.input_type, 0, True, args.db_host, args.db_port,
-                                                args.user, password, args.replicaset)
+    citation_docs = load_mongo_docs_or_json(args.input, args.input_type, 0, True, args.db_host, args.db_port,
+                                            args.user, password, args.replicaset)
     citation_docs = [doc for doc in citation_docs if doc['answer'] == 'accept']
     gpt_training = create_gpt_training_prompts(citation_docs)
     srsly.write_jsonl(args.output_filename, gpt_training)
