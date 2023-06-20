@@ -2,15 +2,18 @@ from util.helper import load_mongo_docs_or_json
 import os
 import argparse
 from sefaria.utils.util import wrap_chars_with_overlaps
+from sklearn.model_selection import train_test_split
 import srsly
 
 GPT_PROMPT_END_INDICATOR = "\n\n###\n\n"
+GPT_COMPLETION_END_INDICATOR = " $$END#INDICATOR$$"
 
 
 def init_argparse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument('input')
-    parser.add_argument('output_filename')
+    parser.add_argument('training_filename')
+    parser.add_argument('validation_filename')
     parser.add_argument('-i', '--input-type', dest='input_type')
     parser.add_argument('-m', '--db-host', dest='db_host')
     parser.add_argument('-p', '--db-port', dest='db_port', type=int)
@@ -36,7 +39,7 @@ def create_get_prompt_input(citation_doc):
 
 def create_gpt_prompt_output(citation_doc):
     chars_to_wrap = [(span['start'], span['end'], None) for span in citation_doc['spans']]
-    return wrap_chars_with_overlaps(citation_doc['text'], chars_to_wrap, get_wrapped_citation)
+    return f" {wrap_chars_with_overlaps(citation_doc['text'], chars_to_wrap, get_wrapped_citation)}{GPT_COMPLETION_END_INDICATOR}"
 
 
 if __name__ == '__main__':
@@ -47,4 +50,6 @@ if __name__ == '__main__':
                                             args.user, password, args.replicaset)
     citation_docs = [doc for doc in citation_docs if doc['answer'] == 'accept']
     gpt_training = create_gpt_training_prompts(citation_docs)
-    srsly.write_jsonl(args.output_filename, gpt_training)
+    training_data, validation_data = train_test_split(gpt_training, random_state=613, train_size=0.8)
+    srsly.write_jsonl(args.training_filename, training_data)
+    srsly.write_jsonl(args.validation_filename, validation_data)
