@@ -51,5 +51,7 @@ if __name__ == '__main__':
     citation_docs = [doc for doc in citation_docs if doc['answer'] == 'accept']
     gpt_training = create_gpt_training_prompts(citation_docs)
     training_data, validation_data = train_test_split(gpt_training, random_state=613, train_size=0.8)
+    print("TRAINING SIZE:", len(training_data))
+    print("VALIDATION SIZE:", len(validation_data))
     srsly.write_jsonl(args.training_filename, training_data)
     srsly.write_jsonl(args.validation_filename, validation_data)
