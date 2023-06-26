@@ -1,3 +1,5 @@
+vars:
+  base_model: "ada"
 env:
   openai_api_key: OPENAI_API_KEY
 workflows:
@@ -36,7 +38,7 @@ commands:
     outputs:
       - 'output/fine_tune_job.json'
     script:
-      - './scripts/create_fine_tune.sh ${env.openai_api_key} output/gpt_citation_training_upload_data.json output/gpt_citation_validation_upload_data.json output/fine_tune_job.json'
+      - './scripts/create_fine_tune.sh ${env.openai_api_key} ${vars.base_model} output/gpt_citation_training_upload_data.json output/gpt_citation_validation_upload_data.json output/fine_tune_job.json'
 
   - name: fine_tune_status
     deps:

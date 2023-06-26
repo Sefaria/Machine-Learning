@@ -1,17 +1,18 @@
 #!/bin/bash
 
 # Check if required inputs are provided
-if [ $# -ne 4 ]; then
+if [ $# -ne 5 ]; then
   echo "Error: Missing required parameters"
-  echo "Usage: ./fine_tune.sh <OPENAI_API_KEY> <TRAINING_UPLOAD_JSON_FILE> <VALIDATION_UPLOAD_JSON_FILE> <OUTPUT_FILE>"
+  echo "Usage: ./fine_tune.sh <OPENAI_API_KEY> <BASE_MODEL> <TRAINING_UPLOAD_JSON_FILE> <VALIDATION_UPLOAD_JSON_FILE> <OUTPUT_FILE>"
   exit 1
 fi
 
 # Read input variables
 OPENAI_API_KEY=$1
-TRAINING_UPLOAD_JSON_FILE=$2
-VALIDATION_UPLOAD_JSON_FILE=$3
-OUTPUT_FILE=$4
+BASE_MODEL=$2
+TRAINING_UPLOAD_JSON_FILE=$3
+VALIDATION_UPLOAD_JSON_FILE=$4
+OUTPUT_FILE=$5
 
 # Check if jq is installed
 if ! command -v jq &>/dev/null; then
@@ -29,5 +30,8 @@ curl https://api.openai.com/v1/fine-tunes \
   -H "Authorization: Bearer $OPENAI_API_KEY" \
   -d "{ \
     \"training_file\": \"$TRAINING_UPLOAD_JSON_FILE_ID\", \
-    \"validation_file\": \"$VALIDATION_UPLOAD_JSON_FILE_ID\" \
+    \"validation_file\": \"$VALIDATION_UPLOAD_JSON_FILE_ID\", \
+    \"model\": \"$BASE_MODEL\" \
   }" > "${OUTPUT_FILE}"
+
+cat $OUTPUT_FILE

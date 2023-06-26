@@ -7,9 +7,9 @@ create_citation_training:
   deps: []
   outs:
     - path: output/gpt_citation_training.jsonl
-      md5: 561202b80ac6821ec590c289e389fbb3
+      md5: edd9ab201f38557fd30ddc7ca9595b14
     - path: output/gpt_citation_validation.jsonl
-      md5: 8573ce9e5bd964f5295ae191401e0778
+      md5: a74b8565cbc32cc138180cbb231a8c8b
   spacy_version: 3.2.5
   spacy_git_version: 6e8ab1544
 upload_files:
@@ -21,14 +21,14 @@ upload_files:
       output/gpt_citation_validation.jsonl output/gpt_citation_validation_upload_data.json
   deps:
     - path: output/gpt_citation_training.jsonl
-      md5: 561202b80ac6821ec590c289e389fbb3
+      md5: edd9ab201f38557fd30ddc7ca9595b14
     - path: output/gpt_citation_validation.jsonl
-      md5: 8573ce9e5bd964f5295ae191401e0778
+      md5: a74b8565cbc32cc138180cbb231a8c8b
   outs:
     - path: output/gpt_citation_training_upload_data.json
-      md5: 7a39183b8e3c75b76619653503a856d5
+      md5: b77482bec3c43ac55ba27816aec3725e
     - path: output/gpt_citation_validation_upload_data.json
-      md5: 786c9c07243c81d73ef919fda1a05e58
+      md5: 6713447334a35b9323c6c9c3e97ecad0
   spacy_version: 3.2.5
   spacy_git_version: 6e8ab1544
 yo:
@@ -51,16 +51,16 @@ create_fine_tune:
   cmd: python -m spacy run create_fine_tune
   script:
     - ./scripts/create_fine_tune.sh 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
-      output/gpt_citation_training_upload_data.json output/gpt_citation_validation_upload_data.json
+      ada output/gpt_citation_training_upload_data.json output/gpt_citation_validation_upload_data.json
       output/fine_tune_job.json
   deps:
     - path: output/gpt_citation_training_upload_data.json
-      md5: 7a39183b8e3c75b76619653503a856d5
+      md5: b77482bec3c43ac55ba27816aec3725e
     - path: output/gpt_citation_validation_upload_data.json
-      md5: 786c9c07243c81d73ef919fda1a05e58
+      md5: 6713447334a35b9323c6c9c3e97ecad0
   outs:
     - path: output/fine_tune_job.json
-      md5: 9657e3fd5b7bdd018ef425f9fe8d6a63
+      md5: aee3c4c5e095acffe0294738c6bf7cb5
   spacy_version: 3.2.5
   spacy_git_version: 6e8ab1544
 fine_tune_status:
@@ -70,10 +70,10 @@ fine_tune_status:
       output/fine_tune_job.json output/fine_tune_job.json
   deps:
     - path: output/fine_tune_job.json
-      md5: 93ea1c0e461a859293e27d88f09072d3
+      md5: 2172ec462fcfcd5cec63897ac70177ea
   outs:
     - path: output/fine_tune_job.json
-      md5: 93ea1c0e461a859293e27d88f09072d3
+      md5: 2172ec462fcfcd5cec63897ac70177ea
   spacy_version: 3.2.5
   spacy_git_version: 6e8ab1544
 fine_tune_stats:
@@ -83,10 +83,10 @@ fine_tune_stats:
       output/fine_tune_job.json output/fine_tune_stats.csv
   deps:
     - path: output/fine_tune_job.json
-      md5: 48b24b4c4887225f5a1a586a4a09c1d6
+      md5: cb1f8d2fe5fdcbc4439b07b2acb8263d
   outs:
     - path: output/fine_tune_stats.csv
-      md5: f34390665e12ea60193ec71979eaf3d5
+      md5: 736f5732156f622e4ab859b3b22807c0
   spacy_version: 3.2.5
   spacy_git_version: 6e8ab1544
 use_fine_tune:
@@ -98,9 +98,9 @@ use_fine_tune:
     - path: input/english_citation_input.txt
       md5: 6c11b7e5a82225faebe774fc80b9bfda
     - path: output/fine_tune_job.json
-      md5: 93ea1c0e461a859293e27d88f09072d3
+      md5: cb1f8d2fe5fdcbc4439b07b2acb8263d
   outs:
     - path: output/fine_tune_completion.json
-      md5: e852214b4a21fc526a59f0d5104d04ae
+      md5: cd4603e4ced4b2516ee6b1b038823303
   spacy_version: 3.2.5
   spacy_git_version: 6e8ab1544
