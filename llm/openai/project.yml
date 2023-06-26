@@ -1,5 +1,7 @@
 vars:
   base_model: "ada"
+  input_collection: "webpages_en_output3"
+  output_model_suffix: "en_citations"
 env:
   openai_api_key: OPENAI_API_KEY
 workflows:
@@ -11,7 +13,7 @@ workflows:
 commands:
   - name: create_citation_training
     script:
-      - 'python scripts/create_citation_input_for_fine_tuning.py webpages_en_output3 output/gpt_citation_training.jsonl output/gpt_citation_validation.jsonl -i mongo -m localhost -p 27017'
+      - 'python scripts/create_citation_input_for_fine_tuning.py ${vars.input_collection} output/gpt_citation_training.jsonl output/gpt_citation_validation.jsonl -i mongo -m localhost -p 27017'
     outputs:
       - 'output/gpt_citation_training.jsonl'
       - 'output/gpt_citation_validation.jsonl'
@@ -38,7 +40,7 @@ commands:
     outputs:
       - 'output/fine_tune_job.json'
     script:
-      - './scripts/create_fine_tune.sh ${env.openai_api_key} ${vars.base_model} output/gpt_citation_training_upload_data.json output/gpt_citation_validation_upload_data.json output/fine_tune_job.json'
+      - './scripts/create_fine_tune.sh ${env.openai_api_key} ${vars.base_model} output/gpt_citation_training_upload_data.json output/gpt_citation_validation_upload_data.json output/fine_tune_job.json ${vars.output_model_suffix}'
 
   - name: fine_tune_status
     deps:
