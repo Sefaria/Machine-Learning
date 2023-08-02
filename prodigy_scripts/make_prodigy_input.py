@@ -2,6 +2,7 @@ import django, regex, srsly, random, re
 from os import walk, path
 from collections import defaultdict
 from tqdm import tqdm
+import argparse
 django.setup()
 from sefaria.model import *
 from sefaria.system.exceptions import InputError
@@ -10,10 +11,11 @@ from sefaria.helper.normalization import NormalizerComposer
 
 
 class ProdigyInputWalker:
-    def __init__(self, prev_tagged_refs=None, with_links=False, preprocess_input=None):
+    def __init__(self, prev_tagged_refs=None, with_links=False, preprocess_input=None, min_links=None):
         self.prodigyInput = []
         self.prodigyInputByVersion = defaultdict(list)
         self.with_links = with_links
+        self.min_links = min_links
         self.prev_tagged_refs = prev_tagged_refs or []
         self.normalizer = NormalizerComposer(['unidecode', 'br-tag', 'itag' ,'html', 'maqaf', 'cantillation', 'double-space'])
         if preprocess_input:
@@ -82,11 +84,13 @@ class ProdigyInputWalker:
         temp_input_list = []
         for t in text_list:
             if len(t) <= 20: continue
-            refs_with_loc = ProdigyInputWalker.get_refs_with_location(t, language) if self.with_links else []
+            refs_with_loc = ProdigyInputWalker.get_refs_with_location(t, language) if (self.with_links or self.min_links) else []
+            if self.min_links is not None and len(refs_with_loc) < self.min_links:
+                continue
             temp_input = {
                 "text": t,
                 "spans": [
-                    {"start": s, "end": e, "label": "source"} for _, _, s, e in refs_with_loc
+                    {"start": s, "end": e, "label": "Citation"} for _, _, s, e in (refs_with_loc if self.with_links else [])
                 ],
                 "meta": {
                     "Ref": en_tref
@@ -132,17 +136,20 @@ def make_random_prodigy_input(lang, prev_tagged_refs, collection, with_links=Fal
 
 
 def make_prodigy_input(title_list, vtitle_list, lang_list, prev_tagged_refs, collection, with_links=False, 
-                       preprocess=None, maxProdigyInput=None):
-    walker = ProdigyInputWalker(prev_tagged_refs, with_links, preprocess_input=preprocess)
+                       preprocess=None, max_prodigy_input=None, min_links=None):
+    walker = ProdigyInputWalker(prev_tagged_refs, with_links, preprocess_input=preprocess, min_links=min_links)
     for title, vtitle, lang in tqdm(zip(title_list, vtitle_list, lang_list), total=len(title_list)):
         if vtitle is None:
-            version = VersionSet({"title": title, "language": lang}, sort=[("priority", -1)], limit=1).array()[0]
+            versions = VersionSet({"title": title, "language": lang}, sort=[("priority", -1)], limit=1).array()
+            if len(versions) == 0:
+                continue
+            version = versions[0]
         else:
             version = Version().load({"title": title, "versionTitle": vtitle, "language": lang})
         version.walk_thru_contents(walker.action)
     walker.make_final_input(400)
-    if maxProdigyInput:
-        walker.prodigyInput = walker.prodigyInput[:maxProdigyInput]
+    if max_prodigy_input:
+        walker.prodigyInput = walker.prodigyInput[:max_prodigy_input]
     import_data_to_collection(walker.prodigyInput, collection)
 
 
@@ -169,6 +176,7 @@ def make_prodigy_input_webpages(n, lang, collection, prev_tagged_urls=None):
     for webpage in walk_all_webpages("../web_scraper/output", lang):
         if not webpage.has_real_data() or webpage.url in prev_tagged_urls:
             continue
+        # Seemingly we should continue if chosen is False. Not sure why that isn't happening.
         chosen = random.choice([True, False])
         if nchosen >= n: break
         nchosen += int(chosen)
@@ -223,6 +231,7 @@ def make_prodigy_input_by_refs(ref_list, lang, vtitle):
         input_list += temp_input_list
     srsly.write_jsonl('data/test_input.jsonl', input_list)
 
+
 def make_prodigy_input_sub_citation(citation_collection, output_collection, skip=0):
     my_db = MongoProdigyDBManager('blah', 'localhost', 27017)
     getattr(my_db.db, output_collection).delete_many({})
@@ -231,30 +240,15 @@ def make_prodigy_input_sub_citation(citation_collection, output_collection, skip
             span_text = doc['text'][span['start']:span['end']]
             getattr(my_db.db, output_collection).insert_one({"text": span_text, "spans": [], "meta": {"Ref": doc['meta']['Ref'], "Start": span['start'], "End": span['end']}})
 
+
 def get_prev_tagged_refs(collection):
     my_db = MongoProdigyDBManager(collection,'localhost', 27017)
     return set(my_db.output_collection.find({}).distinct('meta.Ref'))
 
+
 if __name__ == "__main__":
-    # title_list = [
-    #     'Rashba on Chullin', 'Chiddushei Ramban on Beitzah',
-    #     'Tosafot on Shevuot', 'Rabbeinu Gershom on Meilah',
-    #     'Rashbam on Menachot',
-    #     'Yad Ramah on Sanhedrin', 'Rashi on Taanit', "Chidushei HaRa'ah on Berakhot",
-    #     "Commentary of the Rosh on Nedarim", "Mefaresh on Tamid", "Meiri on Bava Kamma",
-    #     "Mordechai on Bava Batra", "Rav Nissim Gaon on Shabbat", "Rosh on Kiddushin", "Tosafot Chad Mikamei on Yevamot",
-    #     "Tosafot HaRosh on Horayot", "Tosafot Rid on Avodah Zarah Third Recension", "Tosafot Shantz on Sotah",
-    #     "Tosafot Yeshanim on Keritot", "HaMaor HaKatan on Eruvin", "Nimukei Yosef on Bava Metzia"
-    # ]
-    title_list = [
-        "Ein HaTekhelet", "Shev Shmat'ta", "Havot Yair", "Responsa Chatam Sofer", "Netivot Olam", "Mei HaShiloach",
-        "Pri Tzadik", "Sefer HeArukh", "Gilyon HaShas on Berakhot", "Chakham Tzvi", "Sheilat Yaavetz", "B'Mareh HaBazak Volume VII"
-    ]
     prev_tagged_refs = set()  # get_prev_tagged_refs('webpages_output')
-    # title_list = [i.title for i in IndexSet({"title": re.compile(r'Gilyon HaShas on')})]
-    # print(title_list)
     # make_random_prodigy_input('en', prev_tagged_refs, 'ner_en_input', max_length=1500)
-    # make_prodigy_input(title_list, [None]*len(title_list), ['en']*len(title_list), prev_tagged_refs, 'ner_en_input')
     make_prodigy_input_webpages(3000, "en", "webpages_en_input", prev_tagged_refs)
     # combine_all_sentences_to_paragraphs()
     # make_prodigy_input_sub_citation('webpages_output', 'webpages_sub_citation_input2')
