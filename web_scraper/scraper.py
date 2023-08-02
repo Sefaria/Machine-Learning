@@ -18,6 +18,7 @@ nlp.add_pipe('language_detector', last=True)
 
 def get_driver(headless):
     options = webdriver.ChromeOptions()
+    options.binary_location = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
     if headless:
         options.add_argument("--headless")
         options.add_argument('--blink-settings=imagesEnabled=false')

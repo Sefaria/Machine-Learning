@@ -55,10 +55,11 @@ if __name__ == "__main__":
     with open(args.urlfilename, 'r') as fin:
         urls = [url.strip() for url in fin]
         urls_to_scrape = urls[skip:]
+    print("URLs to scraper", len(urls_to_scrape))
     if args.concurrent:
         print("fast mode")
         # scrape and crawl
-        with ThreadPoolExecutor(50) as executor:
+        with ThreadPoolExecutor(15) as executor:
             _ = [executor.submit(run_process, url, args.headless) for url in urls_to_scrape]
             #wait(futures)
     else:

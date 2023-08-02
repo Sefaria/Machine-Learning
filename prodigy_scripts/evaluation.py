@@ -240,13 +240,13 @@ def main(task: str, lang: str, collection_name: str, model_dir: str = None, db_h
         nlp = spacy.load(model_dir)
         docs = get_corpus_data(db_host, db_port, collection_name, random_state, train_perc, "test", min_len)
         evaluated_docs = generate_example_stream(nlp, docs)
-        print(make_evaluation_files(evaluated_docs, nlp, './output/evaluation_results', lang='he', only_errors=False))
+        print(make_evaluation_files(evaluated_docs, nlp, './output/evaluation_results', lang=lang, only_errors=False))
     elif task == "export tagged data":
         nlp = English() if lang == "en" else Hebrew()
         nlp.tokenizer = inner_punct_tokenizer_factory()(nlp)
         docs = get_corpus_data(db_host, db_port, collection_name, -1, 0, "test", min_len, include_reject=False)
         exported_docs = generate_example_stream(nlp, docs)
-        export_tagged_data_as_html(exported_docs, './output/evaluation_results', is_binary=False, start=0, lang='en')
+        export_tagged_data_as_html(exported_docs, './output/evaluation_results', is_binary=False, start=0, lang=lang)
     elif task == "output data to refine":
         pass
         ## Output test data to collection to refine in prodigy
