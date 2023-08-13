@@ -2,7 +2,7 @@ import argparse, os
 from concurrent.futures import ThreadPoolExecutor, wait
 from time import time
 from tqdm import tqdm
-from scraper import connect_to_url, get_driver, get_text_to_save, write_to_file, get_filename, BASE_DIR
+from scraper import connect_to_url, get_driver, get_text_to_save, write_to_file, get_filename, BASE_DIR, get_error_text
 
 
 def run_process(url, headless):
@@ -17,9 +17,13 @@ def run_process(url, headless):
             text = get_text_to_save(url, html)
             if len(text) != 0:
                 write_to_file(filename, text)
+            else:
+                write_to_file(filename, get_error_text(url))
         else:
-            pass
+            write_to_file(filename, get_error_text(url))
             # print("Error connecting to Wikipedia")
+    except Exception as e:
+        write_to_file(filename, get_error_text(url))
     finally:
         browser.close()
         browser.quit()
@@ -30,32 +34,65 @@ def init_argparse() -> argparse.ArgumentParser:
     parser.add_argument("-e", "--headless", dest="headless", help="headless?", default=False, action='store_true')
     parser.add_argument("-c", "--concurrent", dest="concurrent", help="concurrent?", default=False, action='store_true')
     parser.add_argument("-u", "--urlfilename", dest="urlfilename", help="url filename")
-    parser.add_argument("-s", "--skip", dest="skip", default=0)
+    parser.add_argument("-s", "--skip", dest="skip", type=int, default=0)
+    parser.add_argument("-m", "--max-to-scrape", type=int, default=None)
+    parser.add_argument("--skip-existing", default=False, action="store_true")
     return parser
 
 
-def reorder_urls_file(urlfilename, urls):
+def _get_existing_filenames():
     from pathlib import Path
-    hashed_filenames = [os.path.basename(get_filename(url)) for url in urls]
-    existing_files = set(os.listdir(Path(BASE_DIR).joinpath("output")))
-    urls_and_hashes = list(zip(urls, hashed_filenames))
-    urls_and_hashes.sort(key=lambda x: int(x[1] in existing_files), reverse=True)
+    return set(os.listdir(Path(BASE_DIR).joinpath("output")))
+
+
+def _get_hashed_filenames(urls):
+    return [os.path.basename(get_filename(url)) for url in urls]
+
+
+def get_untried_urls(urls):
+    existing_filenames = _get_existing_filenames()
+    hashes = _get_hashed_filenames(urls)
+    urls_and_hashes = list(zip(urls, hashes))
+    untried_urls = [url for (url, url_hash) in filter(lambda x: x[1] not in existing_filenames, urls_and_hashes)]
+    print("URLS UNTRIED", len(untried_urls))
+    return untried_urls
+
+
+def read_urls_file(urlfilename):
+    with open(urlfilename, 'r') as fin:
+        return [url.strip() for url in fin]
+
+
+def reorder_urls_file(urlfilename):
+    urls = read_urls_file(urlfilename)
+    urls_and_hashes = list(zip(urls, _get_hashed_filenames(urls)))
+    existing_filenames = _get_existing_filenames()
+    urls_and_hashes.sort(key=lambda x: int(x[1] in existing_filenames), reverse=True)
     urls = [x[0] for x in urls_and_hashes]
     with open(urlfilename, 'w') as fout:
         fout.write("\n".join(urls))
 
 
+def get_urls_to_scrape(urlfilename, skip_existing, skip, max_to_scrape):
+    urls = read_urls_file(urlfilename)
+    if skip_existing:
+        urls_to_scrape = get_untried_urls(urls)
+    else:
+        urls_to_scrape = urls[skip:]
+    if max_to_scrape:
+        urls_to_scrape = urls_to_scrape[:max_to_scrape]
+    print("URLs to scrape", len(urls_to_scrape))
+    return urls_to_scrape
+
+
 if __name__ == "__main__":
     parser = init_argparse()
     args = parser.parse_args()
-    skip = int(args.skip)
+    skip = args.skip
     print("SKIP", skip)
     # set variables
     start_time = time()
-    with open(args.urlfilename, 'r') as fin:
-        urls = [url.strip() for url in fin]
-        urls_to_scrape = urls[skip:]
-    print("URLs to scraper", len(urls_to_scrape))
+    urls_to_scrape = get_urls_to_scrape(args.urlfilename, args.skip_existing, args.skip, args.max_to_scrape)
     if args.concurrent:
         print("fast mode")
         # scrape and crawl
@@ -66,7 +103,7 @@ if __name__ == "__main__":
         print("slow mode")
         for url in tqdm(urls_to_scrape):
             run_process(url, args.headless)
-    reorder_urls_file(args.urlfilename, urls)
+    # reorder_urls_file(args.urlfilename)
     end_time = time()
     elapsed_time = end_time - start_time
     print(f"Elapsed run time: {elapsed_time} seconds")

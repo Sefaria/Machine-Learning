@@ -49,6 +49,10 @@ def get_text_to_save(url, html):
     return f"{url}\n{doc.title()}\n{lang['language']} {lang['score']:{1}.{2}}\n{text}"  # add url to top line of file
 
 
+def get_error_text(url):
+    return f"{url}\n$SCRAPING_ERROR$"
+
+
 def get_filename(url):
     hash_filename = hashlib.md5(url.encode()).hexdigest()
     return Path(BASE_DIR).joinpath(f"output/{hash_filename}.txt")
