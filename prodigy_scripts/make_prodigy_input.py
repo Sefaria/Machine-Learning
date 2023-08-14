@@ -98,9 +98,7 @@ class ProdigyInputWalker:
             }
             temp_input_list += [temp_input]
         return temp_input_list
-    
 
-    
     def action(self, text, en_tref, he_tref, version):
         if en_tref in self.prev_tagged_refs:
             print("ignoring", en_tref)
@@ -135,7 +133,7 @@ def make_random_prodigy_input(lang, prev_tagged_refs, collection, with_links=Fal
     import_data_to_collection(walker.prodigyInput, collection)
 
 
-def make_prodigy_input(title_list, vtitle_list, lang_list, prev_tagged_refs, collection, with_links=False, 
+def make_prodigy_input_index(title_list, vtitle_list, lang_list, prev_tagged_refs, collection, with_links=False,
                        preprocess=None, max_prodigy_input=None, min_links=None):
     walker = ProdigyInputWalker(prev_tagged_refs, with_links, preprocess_input=preprocess, min_links=min_links)
     for title, vtitle, lang in tqdm(zip(title_list, vtitle_list, lang_list), total=len(title_list)):
@@ -210,6 +208,7 @@ def combine_sentences_to_paragraph(sentences):
         'meta': sentences[0]['meta']
     }
 
+
 def combine_all_sentences_to_paragraphs():
     my_db = MongoProdigyDBManager('blah', 'localhost', 27017)
     examples = my_db.db.examples
@@ -220,6 +219,7 @@ def combine_all_sentences_to_paragraphs():
     combined_examples = [combine_sentences_to_paragraph(sentences) for sentences in examples_by_ref.values()]
     my_db.db.examples1_input.delete_many({})
     my_db.db.examples1_input.insert_many(combined_examples)
+
 
 def make_prodigy_input_by_refs(ref_list, lang, vtitle):
     walker = ProdigyInputWalker([])
@@ -241,14 +241,16 @@ def make_prodigy_input_sub_citation(citation_collection, output_collection, skip
             getattr(my_db.db, output_collection).insert_one({"text": span_text, "spans": [], "meta": {"Ref": doc['meta']['Ref'], "Start": span['start'], "End": span['end']}})
 
 
-def get_prev_tagged_refs(collection):
-    my_db = MongoProdigyDBManager(collection,'localhost', 27017)
+def get_prev_tagged_refs(collection_name):
+    if collection_name is None:
+        return set()
+    my_db = MongoProdigyDBManager(collection_name, 'localhost', 27017)
     return set(my_db.output_collection.find({}).distinct('meta.Ref'))
 
 
 if __name__ == "__main__":
-    prev_tagged_refs = set()  # get_prev_tagged_refs('webpages_output')
+    pass
+    # TODO these commands may still be useful. If they are, pull out args for them.
     # make_random_prodigy_input('en', prev_tagged_refs, 'ner_en_input', max_length=1500)
-    make_prodigy_input_webpages(3000, "en", "webpages_en_input", prev_tagged_refs)
     # combine_all_sentences_to_paragraphs()
     # make_prodigy_input_sub_citation('webpages_output', 'webpages_sub_citation_input2')
