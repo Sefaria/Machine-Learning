@@ -46,6 +46,7 @@ def create_normalizer():
     return NormalizerByLang({
         'en': NormalizerComposer(base_normalizer_steps),
         'he': NormalizerComposer(base_normalizer_steps + ['maqaf', 'cantillation']),
+        None: NormalizerComposer(base_normalizer_steps + ['maqaf', 'cantillation']),
     })
 
 
