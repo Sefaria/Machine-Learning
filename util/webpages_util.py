@@ -1,11 +1,13 @@
 import dataclasses
 import os, re, shutil
+import random
 from pathlib import Path
 from collections import defaultdict
 from typing import List, Optional
 from iso639 import languages
 import math
 import tarfile
+from urllib.parse import urlparse
 from util.spacy_registry import create_language_detector
 from sefaria.utils.hebrew import strip_cantillation
 import spacy
@@ -23,6 +25,9 @@ class ScrapedWebPage:
     text_lines: List[str]
     filename: str
 
+    def __post_init__(self):
+        self.domain = re.sub(r"^www\.", "", urlparse(self.url).netloc)
+
     def get_text(self):
         return "\n".join(self.text_lines)
 
@@ -35,8 +40,8 @@ class ScrapedWebPage:
         for bad in BAD_TITLE_STRS:
             if re.search(fr"(?:^|\s){bad}(?:\s|$)", self.title):
                 return False
-        if self.language_confidence < 0.95:
-            return False
+        # if self.language_confidence < 0.95:
+        #     return False
         if len(strip_cantillation(self.get_text(), strip_vowels=True)) < 200:
             return False
 
@@ -58,6 +63,10 @@ class ScrapedWebPage:
         os.remove(self.filename)
 
 
+class ScrapingError(Exception):
+    pass
+
+
 def get_webpage(filename) -> Optional[ScrapedWebPage]:
     with open(filename, 'r') as fin:
         try:
@@ -65,6 +74,9 @@ def get_webpage(filename) -> Optional[ScrapedWebPage]:
         except UnicodeDecodeError:
             print(filename, "isn't in UTF-8")
             return
+        if lines[1] == "$SCRAPING_ERROR$":
+            return ScrapingError
+
         if len(lines) < 4:
             return  # no actual text
         try:
@@ -103,16 +115,18 @@ def walk_all_webpages(dir, lang=None):
         for filename in tqdm(filenames, desc='walk all webpages'):
             full_path = Path(dirpath).joinpath(filename)
             webpage = get_webpage(full_path)
-            if lang is None or (webpage is not None and webpage.language == lang):
+            if lang is None or (webpage is not ScrapingError and webpage is not None and webpage.language == lang):
                 yield webpage
 
 
-def delete_bad_pages():
+def delete_bad_pages(bad_domains=None):
     count = 0
     for webpage in walk_all_webpages(DIR):
-        if webpage is None:
+        if webpage is None or webpage is ScrapingError:
             continue
         if not webpage.has_real_data():
+            if bad_domains is not None and webpage.domain not in bad_domains:
+                continue
             count += 1
             webpage.delete()
     print("num deleted", count)
@@ -126,19 +140,22 @@ def get_webpage_stats():
     word_counts_by_lang = defaultdict(int)
     num_none = 0
     num_bad = 0
-    num_deleted = 0
+    num_scraping_error = 0
     conf_hist = defaultdict(int)
+    bad_webpages = []
     for webpage in walk_all_webpages(DIR):
+        if webpage is ScrapingError:
+            num_scraping_error += 1
+            continue
         if webpage is None:
             num_none += 1
             continue
         if not webpage.has_real_data():
+            bad_webpages += [webpage]
             num_bad += 1
             continue
 
-        from urllib.parse import urlparse
-        domain = re.sub(r"^www\.", "", urlparse(webpage.url).netloc)
-        domain_counts[domain] += 1
+        domain_counts[webpage.domain] += 1
         lang_counts[webpage.language] += 1
         page_word_count = len(webpage.get_text().split())
         total_word_count += page_word_count
@@ -158,13 +175,20 @@ def get_webpage_stats():
         print(f"{hist_bucket_size*conf_key}-{hist_bucket_size*(conf_key+1)}", count)
     print("num none", num_none)
     print("num bad", num_bad)
-    print("num deleted", num_deleted)
+    print("num scraping errors", num_scraping_error)
     print("total word count", total_word_count)
+
+    random.shuffle(bad_webpages)
+    for webpage in bad_webpages[:100]:
+        print(webpage.url)
+        print(webpage.filename)
+        print(webpage.get_text())
+        print('------')
 
 
 if __name__ == '__main__':
     get_webpage_stats()
-    # delete_bad_pages()
+    # delete_bad_pages(["toravoda.org.il","aish.com","tabletmag.com", "929.org.il", "psak.yctorah.org", "library.yctorah.org", "doi.org", "clevelandjewishnews.com", "askhalacha.com", "jewishexponent.com", "truah.org"])
     # nlp = get_lang_detect_nlp()
     # for webpage in walk_all_webpages(DIR, lang='tl'):
     #     webpage.redetect_stupid_language(nlp)

@@ -18,7 +18,7 @@ def load_mongo_docs(min_training_text_len, unique_by_metadata=True, *db_manager_
 
 
 def filter_rejected_docs(docs):
-    return [doc for doc in docs if doc['answer'] == 'accept']
+    return [doc for doc in docs if doc.get('answer', 'accept') == 'accept']
 
 
 def generate_example_stream(nlp, docs):

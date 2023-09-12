@@ -7,9 +7,10 @@ from util.spacy_registry import get_lang_detect_nlp
 from sefaria.model import *
 from sefaria.system.exceptions import InputError
 
+
 class TextWalker:
 
-    def __init__(self, output_text, output_jsonl, lang, max_line_len=None, format='both', overlap=0, webpages_dir=None):
+    def __init__(self, output_text, output_jsonl, lang, max_line_len=None, format='both', overlap=0, webpages_dir=None, with_metadata=False):
         self.output_text = output_text
         self.output_jsonl = output_jsonl
         self.lang = lang
@@ -19,46 +20,53 @@ class TextWalker:
         self.webpages_dir = webpages_dir
         self.normalizer = create_normalizer()
         self.nlp = create_nlp(self.lang)
+        self.with_metadata = with_metadata
 
-    def write_lines(self, text):
+    def write_lines(self, text, metadata=None):
         text = self.normalizer.normalize(text, lang=self.lang)
         if self.max_line_len is None:
-            self.write_text(text)
+            self.write_text(text, metadata)
         else:
             tokens = [token.text for token in self.nlp.tokenizer(text)]
             for i in range(0, len(tokens), self.max_line_len - self.overlap):
                 line = " ".join(tokens[i:i + self.max_line_len])
-                self.write_text(line)
+                self.write_text(line, metadata)
 
-    def write_text(self, text):
+    def write_text(self, text, metadata=None):
         if self.format in {'both', 'jsonl'}:
-            self.output_jsonl.write(json.dumps({"text": text}) + '\n')
+            data = {"text": text}
+            if self.with_metadata:
+                data['metadata'] = metadata
+            self.output_jsonl.write(json.dumps(data) + '\n')
         if self.format in {'both', 'txt'}:
             self.output_text.write(text + '\n')
 
     def action(self, text, en_tref, he_tref, version):
-        self.write_lines(text)
+        metadata = {
+            "ref": en_tref, "versionTitle": version.versionTitle, "lang": version.actualLanguage,
+            "docCategory": version.get_index().get_primary_category(),
+            'dataQuality': 'user' if version.versionTitle == "Sefaria Community Translation" else 'professional'
+        }
+        self.write_lines(text, metadata=metadata)
 
     def walk_all_versions(self):
         query = {} if self.lang is None else {"language": self.lang}
-        vs = VersionSet(query)
+        vs = VersionSet(query, limit=1)
         count = vs.count()
         for v in tqdm(vs, total=count):
-            if v.versionTitle[-5:-3] == ' [':
-                continue
             try:
                 v.walk_thru_contents(self.action)
             except InputError:
                 continue
 
     def walk_all_webpages(self):
-        from util.webpages_util import walk_all_webpages, extract_webpages_output_dir
-
-        extract_webpages_output_dir(f"{self.webpages_dir}.tar.gz", self.webpages_dir)
+        from util.webpages_util import walk_all_webpages, ScrapingError
 
         for webpage in walk_all_webpages(self.webpages_dir, self.lang):
+            if webpage is ScrapingError: continue
+            if webpage is None: continue
             if not webpage.has_real_data(): continue
-            self.write_lines(webpage.get_text())
+            self.write_lines(webpage.get_text(), metadata={'dataQuality': "professional", "url": webpage.url, "lang": webpage.language})
 
     def walk_all_sheets(self):
         """
@@ -67,8 +75,8 @@ class TextWalker:
         """
         from sefaria.system.database import db
         lang_counts = defaultdict(int)
-        # nlp = get_lang_detect_nlp()
-        sheet_query = {"status": "public", "viaOwner": {"$exists": 0}, "assignment_id": {"$exists": 0}}
+        nlp = get_lang_detect_nlp()
+        sheet_query = {"viaOwner": {"$exists": 0}, "assignment_id": {"$exists": 0}}
         num_public = db.sheets.count_documents(sheet_query)
         for sheet in tqdm(db.sheets.find(sheet_query), total=num_public):
             try:
@@ -76,11 +84,11 @@ class TextWalker:
             except:
                 continue
             # TODO not clear we want to tag sheets by lang
-            # doc = nlp(text)
-            # lang = doc._.language['language']
+            doc = nlp(text)
+            lang = doc._.language['language']
             # lang_counts[lang] += 1
             # if lang != self.lang: continue
-            self.write_lines(text)
+            self.write_lines(text, metadata={"lang": lang, "id": sheet['id'], "dataQuality": "user"})
         for lang, count in sorted(lang_counts.items(), key=lambda x: x[1]):
             print(lang, count)
 
@@ -102,16 +110,16 @@ class TextWalker:
         return text
 
 
-def export_library_as_file(lang, output_stem, max_line_len=None, format='both', overlap=0, webpages_dir=None, with_source_sheets=False):
+def export_library_as_file(lang, output_stem, max_line_len=None, format='both', overlap=0, webpages_dir=None, with_source_sheets=False, with_metadata=False):
     output_text = open(f"{output_stem}.txt", "w")
     output_jsonl = open(f"{output_stem}.jsonl", "w")
 
-    walker = TextWalker(output_text, output_jsonl, lang, max_line_len=max_line_len, format=format, overlap=overlap, webpages_dir=webpages_dir)
+    walker = TextWalker(output_text, output_jsonl, lang, max_line_len=max_line_len, format=format, overlap=overlap, webpages_dir=webpages_dir, with_metadata=with_metadata)
     walker.walk_all_versions()
     if webpages_dir is not None:
         walker.walk_all_webpages()
-    if with_source_sheets:
-        walker.walk_all_sheets()
+    # if with_source_sheets:
+    #     walker.walk_all_sheets()
 
     output_text.close()
     output_jsonl.close()
@@ -130,5 +138,5 @@ def get_args():
 if __name__ == '__main__':
     args = get_args()
     lang = None if args.lang == 'all' else args.lang
-    export_library_as_file(lang, args.output, max_line_len=None, overlap=0, webpages_dir=args.webpages_dir, format=args.format, with_source_sheets=args.with_sheets)
+    export_library_as_file(lang, args.output, max_line_len=None, overlap=0, webpages_dir=args.webpages_dir, format=args.format, with_source_sheets=args.with_sheets, with_metadata=True)
 

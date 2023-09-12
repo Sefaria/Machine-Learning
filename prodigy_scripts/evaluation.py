@@ -262,3 +262,6 @@ def main(task: str, lang: str, collection_name: str, model_dir: str = None, db_h
 if __name__ == "__main__":
     typer.run(main)
 
+"""
+prodigy ner-recipe ref_tagging ner_en_gpt_output_copper ner_en_gpt_silver Citation,Person,Group -lang en -dir ltr --view-id ner_manual
+"""

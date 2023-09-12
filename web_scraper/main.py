@@ -115,7 +115,7 @@ if __name__ == "__main__":
     if args.concurrent:
         print("fast mode")
         # scrape and crawl
-        with ThreadPoolExecutor(10) as executor:
+        with ThreadPoolExecutor(15) as executor:
             _ = [executor.submit(run_process, url, args.headless, args.use_selenium) for url in urls_to_scrape]
     else:
         print("slow mode")
