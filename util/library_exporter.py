@@ -1,4 +1,6 @@
 import django, json, argparse, os
+import srsly
+
 django.setup()
 from tqdm import tqdm
 from collections import defaultdict
@@ -182,6 +184,21 @@ def export_library_as_file(lang, output_stem, max_line_len=None, format='both', 
     print('Word count: {:,}'.format(walker.get_word_count()))
 
 
+def export_all_links():
+    from sefaria.pagesheetrank import init_pagerank_graph
+
+    graph, _ = init_pagerank_graph()
+    out = []
+    filtered_out = []
+    for tref1, linked_tref_dict in tqdm(graph.items(), desc="all links"):
+        for tref2 in linked_tref_dict.keys():
+            out += [{"to": tref1, "from": tref2}]
+            if tref1.startswith("Mishneh Torah, ") or tref2.startswith("Mishneh Torah, "):
+                filtered_out += [out[-1]]
+    srsly.write_jsonl("/Users/nss/Downloads/all_links.jsonl", out)
+    srsly.write_jsonl("/Users/nss/Downloads/mishneh_torah_links.jsonl", filtered_out)
+
+
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('lang', help='either a lang code or "all"')
@@ -196,7 +213,8 @@ def get_args():
 if __name__ == '__main__':
     args = get_args()
     lang = None if args.lang == 'all' else args.lang
-    export_library_as_file(lang, args.output, max_line_len=None, overlap=0, webpages_dir=args.webpages_dir,
-                           format=args.format, with_source_sheets=args.with_sheets, with_metadata=True,
-                           responsa_dir=args.responsa_dir)
+    # export_library_as_file(lang, args.output, max_line_len=None, overlap=0, webpages_dir=args.webpages_dir,
+    #                        format=args.format, with_source_sheets=args.with_sheets, with_metadata=True,
+    #                        responsa_dir=args.responsa_dir)
+    export_all_links()
 
