@@ -2,7 +2,7 @@ description: "variables for training NER model for recognizing citations"
 vars:
   name: "ref"
   lang: "en"
-  training_input: "webpages_en_output"
+  training_input: "ner_en_gpt_gold ner_en_gpt_copper"
   config: "configs/ref-v3.2.cfg"
   training_percentage: 0.8
   min_training_text_len: 20
