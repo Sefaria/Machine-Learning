@@ -199,23 +199,25 @@ export-training-data:
 train-ner:
   cmd: python -m spacy run train-ner
   script:
-    - 'python -m spacy train configs/subref-v3.2.cfg --output models/ref_subref_he
-      --paths.vectors vectors/all_text_he_fasttext_model_50 --paths.train corpus/ref_subref_he_train.spacy
-      --paths.dev corpus/ref_subref_he_test.spacy --nlp.lang he --paths.init_tok2vec
-      models/pretrain_ref_he_50/model8.bin --pretraining.objective.hidden_size 50
-      --code ../util/spacy_registry.py '
+    - python -m spacy train configs/ref-v3.2.cfg --output models/ref_en --paths.vectors
+      vectors/all_text_en_fasttext_model_50 --paths.train corpus/ref_en_train.spacy
+      --paths.dev corpus/ref_en_test.spacy --nlp.lang en --paths.init_tok2vec models/pretrain_ref_en_50/model7.bin
+      --pretraining.objective.hidden_size 50 --code ../../util/spacy_registry.py --gpu-id
+      0
   deps:
-    - path: configs/subref-v3.2.cfg
-      md5: e9eef73ce36db42a40bf9f29318a2a6c
-    - path: models/pretrain_ref_he_50
-      md5: 3fb6a72afdc574c03b0d2b760b7133ba
-    - path: corpus/ref_subref_he_train.spacy
-      md5: 848362723a82cc572f44de31290e085f
-    - path: corpus/ref_subref_he_test.spacy
-      md5: 8b80cb1db5050321b640da2f643d467d
+    - path: configs/ref-v3.2.cfg
+      md5: 55cfd951a5f43e1f7e10d598a195df46
+    - path: models/pretrain_ref_en_50
+      md5: 3d46964a17ef73d806c1bceb304f8ab3
+    - path: corpus/ref_en_train.spacy
+      md5: c516da4e6a31521c8eef257d959b3ebe
+    - path: corpus/ref_en_test.spacy
+      md5: bbc2a4a7413f8a3aa16ef5d609a41f3d
+    - path: vectors/all_text_en_fasttext_model_50
+      md5: bd607a0aa9456429b49ce551ce1d3314
   outs:
-    - path: models/ref_subref_he
-      md5: 4ecd6ac769543640155c627b8d530b6d
+    - path: models/ref_en
+      md5: 6656ea55c634544bde3e97c66d61b6cb
   spacy_version: 3.4.1
   spacy_git_version: Unknown
 export-training-data-from-json:
@@ -230,10 +232,10 @@ export-training-data-from-json:
 export-training-data-from-mongo:
   cmd: python -m spacy run export-training-data-from-mongo
   script:
-    - python ../util/merge_collections.py -o merged_output -m localhost -p 27017 -c
-      webpages_sub_citation_output gilyon_sub_citation_output talmud_tanakh_abbrev_sub_citation_output
-    - python ../util/convert_training_data_to_docbin.py he merged_output corpus/ref_subref_he
-      0 0.8 61 --db-host localhost --db-port 27017 --input-type mongo
+    - 'python ../util/merge_collections.py -o merged_output -m localhost -p 27017
+      -c ner_en_gpt_gold ner_en_gpt_copper --user  --replicaset  '
+    - 'python ../util/convert_training_data_to_docbin.py en merged_output corpus/ref_en
+      20 0.8 61 --input-type mongo --db-host localhost --db-port 27017 --user   --replicaset '
   deps: []
   outs: []
   spacy_version: 3.4.1
