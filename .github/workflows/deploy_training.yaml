@@ -1,5 +1,5 @@
 name: Deploy Training Job
-on: 
+on:
   workflow_dispatch:
     inputs:
       tasklist:
@@ -34,6 +34,12 @@ jobs:
           registry: gcr.io
           username: oauth2accesstoken
           password: '${{ steps.auth.outputs.access_token }}'
+      - name: Login to GAR
+        uses: docker/login-action@v1
+        with:
+          registry: us-east1-docker.pkg.dev
+          username: oauth2accesstoken
+          password: '${{ steps.auth.outputs.access_token }}'
       - name: Get SHA
         id: get-sha
         run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
@@ -46,6 +52,7 @@ jobs:
         with:
           images: |
             gcr.io/${{ secrets.DEV_GKE_PROJECT }}/ml-training
+            us-east1-docker.pkg.dev/${{ secrets.DEV_GKE_PROJECT }}/containers/ml-training
           # generate Docker tags based on the following events/attributes
           tags: |
             type=sha,enable=true,priority=100,prefix=sha-,suffix=-${{ steps.date.outputs.date }},format=short
@@ -70,9 +77,9 @@ jobs:
           location: 'us-east1-b'
       - name: Deploy Job
         run: >-
-          helm upgrade -i 
+          helm upgrade -i
           ml-training-job
-          helm-chart/ml-training 
+          helm-chart/ml-training
           --set image.registry=$REGISTRY
           --set image.version=$GIT_COMMIT
           --set tasklist=${{ inputs.tasklist }}
@@ -81,4 +88,3 @@ jobs:
         env:
           GIT_COMMIT: "${{ steps.get-sha.outputs.sha_short }}"
           REGISTRY: "gcr.io/${{ secrets.DEV_GKE_PROJECT }}"
-
