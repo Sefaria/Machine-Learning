@@ -28,6 +28,7 @@ class TextWalker:
         self.with_metadata = with_metadata
         self.responsa_dir = responsa_dir
         self._word_count = 0
+        self._ref_pr_map = {ref_data.ref: ref_data.pagesheetrank for ref_data in RefDataSet()}
 
     def write_lines(self, text, metadata=None):
         text = self.normalizer.normalize(text, lang=self.lang)
@@ -58,12 +59,13 @@ class TextWalker:
             "url": f"https://www.sefaria.org/{oref.url()}",
             "ref": en_tref, "versionTitle": version.versionTitle, "lang": version.actualLanguage,
             "docCategory": version.get_index().get_primary_category(),
-            'dataQuality': 'user' if version.versionTitle == "Sefaria Community Translation" else 'professional'
+            'dataQuality': 'user' if version.versionTitle == "Sefaria Community Translation" else 'professional',
+            'pagerank': self._ref_pr_map.get(en_tref, RefData.DEFAULT_PAGESHEETRANK),
         }
         self.write_lines(text, metadata=metadata)
 
     def walk_all_versions(self):
-        query = {} if self.lang is None else {"language": self.lang}
+        query = {} if self.lang is None else {"actualLanguage": self.lang}
         vs = VersionSet(query)
         count = vs.count()
         for v in tqdm(vs, total=count):
@@ -213,8 +215,8 @@ def get_args():
 if __name__ == '__main__':
     args = get_args()
     lang = None if args.lang == 'all' else args.lang
-    # export_library_as_file(lang, args.output, max_line_len=None, overlap=0, webpages_dir=args.webpages_dir,
-    #                        format=args.format, with_source_sheets=args.with_sheets, with_metadata=True,
-    #                        responsa_dir=args.responsa_dir)
+    export_library_as_file(lang, args.output, max_line_len=None, overlap=0, webpages_dir=args.webpages_dir,
+                           format=args.format, with_source_sheets=args.with_sheets, with_metadata=True,
+                           responsa_dir=args.responsa_dir)
     export_all_links()
 
