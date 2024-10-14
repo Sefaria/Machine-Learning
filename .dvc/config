@@ -1,5 +1,0 @@
-[core]
-    autostage = true
-    remote = gstorage
-['remote "gstorage"']
-    url = gs://sefaria-machine-learning-dvc

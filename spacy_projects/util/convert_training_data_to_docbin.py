@@ -1,8 +1,9 @@
 from spacy.tokens import DocBin
 import argparse
+import json
 from typing import List
-from util.helper import create_nlp, load_mongo_docs_or_json
-from util.training_utils import get_train_test_data
+from helper import create_nlp, load_mongo_docs_or_json
+from training_utils import get_train_test_data
 import os
 
 
@@ -16,6 +17,8 @@ def output_mongo_docs(mongo_docs: List[dict], lang: str, output_file: str) -> No
         for raw_span in mongo_doc['spans']:
             span = doc.char_span(raw_span['start'], raw_span['end'], label=raw_span['label'])
             ents.append(span)
+        print("debug print: ents = ")
+        print(ents)
         doc.ents = ents
         doc_bin.add(doc)
     doc_bin.to_disk(output_file)

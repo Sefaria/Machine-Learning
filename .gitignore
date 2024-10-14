@@ -4,6 +4,7 @@ dump_small.tar.gz
 prodigy/temp/
 jmc/output
 web_scraper/output
+output
 web_scraper/urls.txt
 prodigy_scripts/output
 prodigy_scripts/temp/
