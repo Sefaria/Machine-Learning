@@ -1,0 +1,9 @@
+description: "variables for training NER model for recognizing parts of citations"
+vars:
+  name: "ref_subref"
+  lang: "en"
+  # training_input: "yerushalmi_sub_citation_output"
+  training_input: "yerushalmi_sub_citation_output:100 ner_en_gpt_gold_sub_citation_output"
+  config: "configs/subref-v3.2.cfg"
+  training_percentage: 0.8
+  min_training_text_len: 0
