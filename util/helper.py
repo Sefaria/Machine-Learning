@@ -8,13 +8,25 @@ from spacy.lang.he import Hebrew
 
 def load_mongo_docs(min_training_text_len, unique_by_metadata=True, *db_manager_args) -> List[dict]:
     from db_manager import MongoProdigyDBManager
-    print(db_manager_args)
     my_db = MongoProdigyDBManager(*db_manager_args)
     data = [d for d in my_db.output_collection.find({}) if len(d['text']) > min_training_text_len]
     # make data unique
     if unique_by_metadata:
         data = list({(tuple(sorted(d['meta'].items(), key=lambda x: x[0])), d['text']): d for d in data}.values())
     return data
+
+
+def save_mongo_docs(min_training_text_len, data: list, clear_existing_data=True, unique_by_metadata=True, *db_manager_args):
+    from db_manager import MongoProdigyDBManager
+    my_db = MongoProdigyDBManager(*db_manager_args)
+    data = [d for d in data if len(d['text']) > min_training_text_len]
+    # make data unique
+    if unique_by_metadata:
+        data = list({(tuple(sorted(d['meta'].items(), key=lambda x: x[0])), d['text']): d for d in data}.values())
+
+    if clear_existing_data:
+        my_db.output_collection.delete_many({})
+    my_db.output_collection.insert_many(data)
 
 
 def filter_rejected_docs(docs):
