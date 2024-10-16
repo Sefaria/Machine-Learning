@@ -7,12 +7,12 @@ django.setup()
 from sefaria.model import *
 from functools import reduce
 from tqdm import tqdm
-from util.training_utils import get_corpus_data
+from util.training_utils import get_corpus_data, get_train_test_data
 from spacy.lang.en import English
 from spacy.lang.he import Hebrew
 from util.spacy_registry import inner_punct_tokenizer_factory
 from sefaria.utils.util import wrap_chars_with_overlaps
-from util.helper import get_window_around_match, generate_example_stream
+from util.helper import get_window_around_match, generate_example_stream, load_mongo_docs
 
 
 def id_to_gen(_id):
@@ -21,7 +21,10 @@ def id_to_gen(_id):
     if _id.startswith('http'):
         return 'web'
     else:
-        oref = Ref(_id)
+        try:
+            oref = Ref(_id)
+        except:
+            return 'N/A'
         # return "|".join(oref.index.authors)
         try:
             tp = oref.index.best_time_period()
@@ -238,8 +241,9 @@ def main(task: str, lang: str, collection_name: str, model_dir: str = None, db_h
          random_state: int = 61, train_perc: float = 0.8, min_len: int = 20):
     if task == "evaluate model":
         nlp = spacy.load(model_dir)
-        docs = get_corpus_data(db_host, db_port, collection_name, random_state, train_perc, "test", min_len)
-        evaluated_docs = generate_example_stream(nlp, docs)
+        docs = load_mongo_docs(min_len, True, collection_name, db_host, db_port)
+        _, test_data = get_train_test_data(random_state, docs, train_perc)
+        evaluated_docs = generate_example_stream(nlp, test_data)
         print(make_evaluation_files(evaluated_docs, nlp, './output/evaluation_results', lang=lang, only_errors=False))
     elif task == "export tagged data":
         nlp = English() if lang == "en" else Hebrew()
