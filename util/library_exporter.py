@@ -61,7 +61,7 @@ class TextWalker:
             "docCategory": version.get_index().get_primary_category(),
             'dataQuality': 'user' if version.versionTitle == "Sefaria Community Translation" else 'professional',
             'pagerank': self._ref_pr_map.get(en_tref, RefData.DEFAULT_PAGESHEETRANK),
-        }
+        } if self.with_metadata else {}
         self.write_lines(text, metadata=metadata)
 
     def walk_all_versions(self):
@@ -208,6 +208,7 @@ def get_args():
     parser.add_argument('-w', '--webpages-dir', dest='webpages_dir')
     parser.add_argument('-r', '--responsa-dir', dest='responsa_dir')
     parser.add_argument('-s', '--with-sheets', dest='with_sheets', action='store_true')
+    parser.add_argument('-m', '--with-metadata', dest='with_metadata', action='store_true')
     parser.add_argument('-o', '--output', dest='output')
     return parser.parse_args()
 
@@ -216,7 +217,7 @@ if __name__ == '__main__':
     args = get_args()
     lang = None if args.lang == 'all' else args.lang
     export_library_as_file(lang, args.output, max_line_len=None, overlap=0, webpages_dir=args.webpages_dir,
-                           format=args.format, with_source_sheets=args.with_sheets, with_metadata=True,
+                           format=args.format, with_source_sheets=args.with_sheets, with_metadata=args.with_metadata,
                            responsa_dir=args.responsa_dir)
     export_all_links()
 
