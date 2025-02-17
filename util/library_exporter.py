@@ -78,7 +78,7 @@ class TextWalker:
     def write_text(self, text, metadata=None):
         if self.format in {'both', 'jsonl'}:
             data = {"text": text}
-            if self.with_metadata:
+            if metadata:
                 data['metadata'] = metadata
             self.output_jsonl.write(json.dumps(data) + '\n')
         if self.format in {'both', 'txt'}:
@@ -126,7 +126,10 @@ class TextWalker:
 
     def action(self, text, en_tref, he_tref, version, doc_type):
         self._add_text_to_section_version_map(Ref(en_tref), text, version)
-        self.write_lines(text, metadata=self._get_text_metadata(en_tref, version, doc_type))
+        metadata = None
+        if self.with_metadata:
+            metadata = self._get_text_metadata(en_tref, version, doc_type)
+        self.write_lines(text, metadata=metadata)
 
     def walk_all_versions(self):
         query = {} if self.lang is None else {"actualLanguage": self.lang}
