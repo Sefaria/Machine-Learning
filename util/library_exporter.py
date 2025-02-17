@@ -15,7 +15,7 @@ from pathlib import Path
 class TextWalker:
 
     def __init__(self, output_text, output_jsonl, lang, max_line_len=None, format='both', overlap=0, webpages_dir=None,
-                 with_metadata=False, responsa_dir=None):
+                 with_metadata=False, responsa_dir=None, with_sections=False):
         self.output_text = output_text
         self.output_jsonl = output_jsonl
         self.lang = lang
@@ -26,9 +26,43 @@ class TextWalker:
         self.normalizer = create_normalizer()
         self.nlp = create_nlp(self.lang)
         self.with_metadata = with_metadata
+        self.with_sections = with_sections
         self.responsa_dir = responsa_dir
         self._word_count = 0
         self._ref_pr_map = {ref_data.ref: ref_data.pagesheetrank for ref_data in RefDataSet()}
+        self._section_version_map = self._make_section_version_map()
+
+    def _make_section_version_map(self):
+        """
+        When self.with_sections is true, we want to save all text by version and section while running `action()`.
+        This will greatly optimize performance
+        """
+        if not self.with_sections:
+            return
+        section_version_map = {}
+        for index in tqdm(library.all_index_records(), desc='pre-calculate sections'):
+            try:
+                for section_ref in index.all_section_refs():
+                    section_version_map[section_ref.normal()] = defaultdict(list)
+            except:
+                print(f"{index.title} failed to get section refs")
+        return section_version_map
+
+
+    def _add_text_to_section_version_map(self, segment_oref, text, version):
+        corpus = segment_oref.index.get_primary_corpus()
+        if not self.with_sections or corpus in {'Tanakh', 'Bavli'}:
+            # Tanakh and Bavli are handled separately
+            return
+        # strip chars off segment_tref until it matches a section ref
+        segment_tref = segment_oref.normal()
+        for i in range(len(segment_tref)):
+            version_map = self._section_version_map.get(segment_tref[:-i], None)
+            if version_map is None:
+                continue
+            version_map[(version.versionTitle, version.actualLanguage)] += [text]
+            break
+
 
     def write_lines(self, text, metadata=None):
         text = self.normalizer.normalize(text, lang=self.lang)
@@ -53,16 +87,46 @@ class TextWalker:
     def get_word_count(self):
         return self._word_count
 
-    def action(self, text, en_tref, he_tref, version):
+    def _get_text_metadata(self, en_tref, version, doc_type):
         oref = Ref(en_tref)
-        metadata = {
+        try:
+            associated_topics = [Topic.init(l.toTopic) for l in oref.topiclinkset() if Topic.init(l.toTopic)]
+        except:
+            associated_topics = []
+
+        index = version.get_index()
+        tp = index.best_time_period()
+        if tp is not None:
+            comp_date = [getattr(tp, 'start', None), getattr(tp, 'end', None)]
+        else:
+            comp_date = None
+        era_symbol = getattr(index, 'era', None)
+        era_name = None
+        if era_symbol is not None:
+            era_name = TimePeriod().load({"symbol": era_symbol}).primary_name("en")
+        authors = index.author_objects()
+        data_origin = 'publisher'
+        original_text = None
+        if version.versionTitle == "Claude v3 Opus Translation":
+            data_origin = 'llm'
+            original_text = self.normalizer.normalize(oref.text("he").as_string(), lang="he")
+        elif version.versionTitle == "Sefaria Community Translation":
+            data_origin = 'user'
+        return {
             "url": f"https://www.sefaria.org/{oref.url()}",
             "ref": en_tref, "versionTitle": version.versionTitle, "lang": version.actualLanguage,
-            "docCategory": version.get_index().get_primary_category(),
-            'dataQuality': 'user' if version.versionTitle == "Sefaria Community Translation" else 'professional',
-            'pagerank': self._ref_pr_map.get(en_tref, RefData.DEFAULT_PAGESHEETRANK),
-        } if self.with_metadata else {}
-        self.write_lines(text, metadata=metadata)
+            "docType": doc_type,
+            "primaryDocCategory": index.get_primary_category(), "allCategories": index.categories,
+            "authorIDs": [author.slug for author in authors], "authorNames": [author.get_primary_title("en") for author in authors],
+            "dataOrigin": data_origin, "eraName": era_name, "compositionDate": comp_date, "compositionPlace": getattr(index, "compPlace", None),
+            "associatedTopicIDs": [topic.slug for topic in associated_topics], "associatedTopicNames": [topic.get_primary_title("en") for topic in associated_topics],
+            "isTranslation": not getattr(version, 'isSource', version.language == "he"),
+            'pagerank': self._ref_pr_map.get(en_tref, RefData.DEFAULT_PAGESHEETRANK), "originalText": original_text,
+        }
+
+    def action(self, text, en_tref, he_tref, version, doc_type):
+        self._add_text_to_section_version_map(Ref(en_tref), text, version)
+        self.write_lines(text, metadata=self._get_text_metadata(en_tref, version, doc_type))
 
     def walk_all_versions(self):
         query = {} if self.lang is None else {"actualLanguage": self.lang}
@@ -70,9 +134,17 @@ class TextWalker:
         count = vs.count()
         for v in tqdm(vs, total=count):
             try:
-                v.walk_thru_contents(self.action)
+                from functools import partial
+                v.walk_thru_contents(partial(self.action, doc_type="segment"))
             except InputError:
                 continue
+        for section_tref, version_map in self._section_version_map.items():
+            for (vtitle, lang), text_list in version_map.items():
+                section_text = "\n".join(text_list)
+                title = Ref(section_tref).index.title
+                version = Version().load({"title": title, "versionTitle": vtitle, "actualLanguage": lang}, proj={"chapter": False})
+                self.action(section_text, section_tref, "", version, doc_type="section")
+
 
     def walk_all_webpages(self):
         from util.webpages_util import walk_all_webpages, ScrapingError
@@ -168,11 +240,11 @@ class TextWalker:
         return text
 
 
-def export_library_as_file(lang, output_stem, max_line_len=None, format='both', overlap=0, webpages_dir=None, with_source_sheets=False, with_metadata=False, responsa_dir=None):
+def export_library_as_file(lang, output_stem, max_line_len=None, format='both', overlap=0, webpages_dir=None, with_source_sheets=False, with_metadata=False, responsa_dir=None, with_sections=False):
     output_text = open(f"{output_stem}.txt", "w")
     output_jsonl = open(f"{output_stem}.jsonl", "w")
 
-    walker = TextWalker(output_text, output_jsonl, lang, max_line_len=max_line_len, format=format, overlap=overlap, webpages_dir=webpages_dir, with_metadata=with_metadata, responsa_dir=responsa_dir)
+    walker = TextWalker(output_text, output_jsonl, lang, max_line_len=max_line_len, format=format, overlap=overlap, webpages_dir=webpages_dir, with_metadata=with_metadata, responsa_dir=responsa_dir, with_sections=with_sections)
     walker.walk_all_versions()
     if webpages_dir is not None:
         walker.walk_all_webpages()
@@ -209,6 +281,7 @@ def get_args():
     parser.add_argument('-r', '--responsa-dir', dest='responsa_dir')
     parser.add_argument('-s', '--with-sheets', dest='with_sheets', action='store_true')
     parser.add_argument('-m', '--with-metadata', dest='with_metadata', action='store_true')
+    parser.add_argument('-p', '--with-sections', dest='with_sections', action='store_true')
     parser.add_argument('-o', '--output', dest='output')
     return parser.parse_args()
 

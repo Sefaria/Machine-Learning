@@ -237,6 +237,7 @@ def make_prodigy_input_sub_citation(citation_collection, output_collection, skip
     getattr(my_db.db, output_collection).delete_many({})
     for doc in getattr(my_db.db, citation_collection).find({}).skip(skip):
         for span in doc['spans']:
+            if span['label'] != 'Citation': continue
             span_text = doc['text'][span['start']:span['end']]
             getattr(my_db.db, output_collection).insert_one({"text": span_text, "spans": [], "meta": {"Ref": doc['meta']['Ref'], "Start": span['start'], "End": span['end']}})
 
@@ -253,4 +254,4 @@ if __name__ == "__main__":
     # TODO these commands may still be useful. If they are, pull out args for them.
     # make_random_prodigy_input('en', prev_tagged_refs, 'ner_en_input', max_length=1500)
     # combine_all_sentences_to_paragraphs()
-    # make_prodigy_input_sub_citation('webpages_output', 'webpages_sub_citation_input2')
+    make_prodigy_input_sub_citation('ner_en_gpt_copper_combo', 'ner_en_gpt_copper_combo_sub_citation')

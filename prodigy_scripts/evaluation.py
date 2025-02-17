@@ -40,6 +40,8 @@ def make_evaluation_files(evaluation_data, ner_model, output_folder, start=0, la
     from collections import defaultdict
     tp, fp, fn, tn = 0, 0, 0, 0
     eval_by_gen = defaultdict(lambda: {"tp": 0, "fp": 0, "fn": 0, "tn": 0})
+    eval_by_label = defaultdict(lambda: {"tp": 0, "fp": 0, "fn": 0, "tn": 0})
+
     data_tuples = [(eg.text, eg) for eg in evaluation_data]
     output_json = []
     # see https://spacy.io/api/language#pipe
@@ -67,6 +69,8 @@ def make_evaluation_files(evaluation_data, ner_model, output_folder, start=0, la
         # breakdown by gen
         for metric, temp in zip(('tp', 'fp', 'fn', 'tn'), (temp_tp, temp_fp, temp_fn, temp_tn)):
             eval_by_gen[id_to_gen(example.predicted.user_data.get('Ref', None))][metric] += len(temp)
+            for _, _, predicted_label in temp:
+                eval_by_label[predicted_label][metric] += 1
         if only_errors and (len(temp_fn) + len(temp_fp)) == 0:
             continue
         output_json += [{
@@ -84,23 +88,29 @@ def make_evaluation_files(evaluation_data, ner_model, output_folder, start=0, la
     print('F1       ', 100 * round(tp / (tp + 0.5 * (fp + fn)), 4))
 
     for gen, metrics in eval_by_gen.items():
-        total = reduce(lambda a, b: a + b, metrics.values(), 0)
-        if total == 0: continue
-        print('-----', gen, '-----')
-        print('Total    ', total)
-        try:
-            print('PRECISION', 100 * round(metrics['tp'] / (metrics['tp'] + metrics['fp']), 4))
-        except ZeroDivisionError:
-            print('PRECISION N/A')
-        try:
-            print('RECALL   ', 100 * round(metrics['tp'] / (metrics['tp'] + metrics['fn']), 4))
-        except ZeroDivisionError:
-            print('RECALL    N/A')
-        try:
-            print('F1       ', 100 * round(metrics['tp'] / (metrics['tp'] + 0.5 * (metrics['fp'] + metrics['fn'])), 4))
-        except ZeroDivisionError:
-            print('F1        N/A')
+        output_accuracy_metrics(gen, metrics)
+    for label, metrics in eval_by_label.items():
+        output_accuracy_metrics(label, metrics)
     return tp, fp, tn, fn
+
+
+def output_accuracy_metrics(title, metrics):
+    total = reduce(lambda a, b: a + b, metrics.values(), 0)
+    if total == 0: return
+    print('-----', title, '-----')
+    print('Total    ', total)
+    try:
+        print('PRECISION', 100 * round(metrics['tp'] / (metrics['tp'] + metrics['fp']), 4))
+    except ZeroDivisionError:
+        print('PRECISION N/A')
+    try:
+        print('RECALL   ', 100 * round(metrics['tp'] / (metrics['tp'] + metrics['fn']), 4))
+    except ZeroDivisionError:
+        print('RECALL    N/A')
+    try:
+        print('F1       ', 100 * round(metrics['tp'] / (metrics['tp'] + 0.5 * (metrics['fp'] + metrics['fn'])), 4))
+    except ZeroDivisionError:
+        print('F1        N/A')
 
 
 def export_tagged_data_as_html(tagged_data, output_folder, is_binary=True, start=0, lang='he'):
@@ -241,9 +251,8 @@ def main(task: str, lang: str, collection_name: str, model_dir: str = None, db_h
          random_state: int = 61, train_perc: float = 0.8, min_len: int = 20):
     if task == "evaluate model":
         nlp = spacy.load(model_dir)
-        docs = load_mongo_docs(min_len, True, collection_name, db_host, db_port)
-        _, test_data = get_train_test_data(random_state, docs, train_perc)
-        evaluated_docs = generate_example_stream(nlp, test_data)
+        docs = get_corpus_data(db_host, db_port, collection_name, random_state, train_perc, "test", min_len, include_reject=True)
+        evaluated_docs = generate_example_stream(nlp, docs)
         print(make_evaluation_files(evaluated_docs, nlp, './output/evaluation_results', lang=lang, only_errors=False))
     elif task == "export tagged data":
         nlp = English() if lang == "en" else Hebrew()

@@ -110,8 +110,10 @@ def compress_webpages_output_dir(input_dir, tar_name):
                 tout.add(full_path, arcname=filename)
 
 
-def walk_all_webpages(dir, lang=None):
+def walk_all_webpages(dir, lang=None, order='default'):
     for (dirpath, dirnames, filenames) in os.walk(dir):
+        if order == 'random':
+            random.shuffle(filenames)
         for filename in tqdm(filenames, desc='walk all webpages'):
             full_path = Path(dirpath).joinpath(filename)
             webpage = get_webpage(full_path)
